@@ -4,13 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
 
-  static const String baseUrl = "http://192.168.1.11:8000/api";
+  static const String baseUrl = "http://192.168.1.12:8000/api";
 
   /// ================= LOGIN =================
-  static Future<Map<String, dynamic>> login(
-      String nisnNip,
-      String password,
-      ) async {
+ static Future<Map<String, dynamic>> login(
+  String nisnNip,
+  String password,
+) async {
+
+  try {
 
     final response = await http.post(
       Uri.parse("$baseUrl/login"),
@@ -24,20 +26,17 @@ class AuthService {
       }),
     );
 
-    final data = jsonDecode(response.body);
+    print("LOGIN STATUS: ${response.statusCode}");
+    print("LOGIN BODY: ${response.body}");
 
-    print("LOGIN STATUS : ${response.statusCode}");
-    print("LOGIN BODY : ${response.body}");
+    final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
       await prefs.setString("token", data["token"]);
-      await prefs.setString("name", data["user"]["name"]);
-      await prefs.setString("role", data["user"]["role"]);
-
-      print("TOKEN TERSIMPAN : ${data["token"]}");
+      await prefs.setString("user", jsonEncode(data["user"]));
 
       return {
         "success": true,
@@ -52,7 +51,19 @@ class AuthService {
       };
 
     }
+
+  } catch (e) {
+
+    print("LOGIN ERROR: $e");
+
+    return {
+      "success": false,
+      "message": "Error: $e"
+    };
+
   }
+
+}
 
   /// ================= LOGOUT =================
   static Future<bool> logout() async {
@@ -117,6 +128,20 @@ class AuthService {
 
   }
 
+  static Future<Map<String, dynamic>?> getUser() async {
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  String? userString = prefs.getString("user");
+
+  if (userString != null) {
+    return jsonDecode(userString);
+  }
+
+  return null;
+
+}
+
   static Future<bool> isLoggedIn() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -129,5 +154,43 @@ class AuthService {
     return false;
 
   }
+
+  /// ================= UPDATE PASSWORD =================
+static Future<bool> updatePassword(String password) async {
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString("token");
+
+  try {
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/update-password"),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "Bearer $token"
+      },
+      body: jsonEncode({
+        "password": password
+      }),
+    );
+
+    print("UPDATE PASSWORD STATUS : ${response.statusCode}");
+    print("UPDATE PASSWORD BODY : ${response.body}");
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+
+    return false;
+
+  } catch (e) {
+
+    print("UPDATE PASSWORD ERROR : $e");
+    return false;
+
+  }
+
+}
 
 }

@@ -63,6 +63,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'nisn' => $user->nisn,
+                'kelas' => $user->kelas,
                 'nip' => $user->nip,
                 'email' => $user->email,
                 'photo' => $user->photo,
@@ -90,5 +91,24 @@ class AuthController extends Controller
         ]);
 
     }
+
+    public function updatePassword(Request $request)
+{
+
+    $request->validate([
+        'password' => 'required|min:6'
+    ]);
+
+    $user = $request->user();
+
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Password berhasil diubah'
+    ]);
+
+}
 
 }

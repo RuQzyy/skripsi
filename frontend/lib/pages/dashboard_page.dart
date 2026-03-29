@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../pages/login_page.dart';
 import '../models/pengumuman_model.dart';
@@ -23,34 +22,32 @@ class _DashboardPageState extends State<DashboardPage> {
 
   bool isLoadingPengumuman = true;
 
-  Future<void> getUser() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+ Future<void> getUser() async {
 
-    setState(() {
-      name = prefs.getString("name") ?? "";
-    });
-  }
+  final user = await AuthService.getUser();
+
+  setState(() {
+    name = user?["name"] ?? "";
+  });
+
+}
 
   Future<void> getPengumuman() async {
-  try {
+    try {
+      final result = await PengumumanService.getPengumuman(limit: 3);
 
-    final result = await PengumumanService.getPengumuman(limit: 3);
+      List<Pengumuman> data = result["data"];
 
-    List<Pengumuman> data = result["data"];
-
-    setState(() {
-      pengumumanList = data;
-      isLoadingPengumuman = false;
-    });
-
-  } catch (e) {
-
-    setState(() {
-      isLoadingPengumuman = false;
-    });
-
+      setState(() {
+        pengumumanList = data;
+        isLoadingPengumuman = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingPengumuman = false;
+      });
+    }
   }
-}
 
   void logout() {
     showDialog(
@@ -609,6 +606,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   builder: (context) => const PengumumanPage(),
                 ),
               );
+            }
+
+            if (index == 2) {
+              Navigator.pushNamed(context, "/profile");
             }
           },
           items: const [

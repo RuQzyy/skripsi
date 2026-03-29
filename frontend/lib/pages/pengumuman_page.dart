@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/pengumuman_model.dart';
 import '../services/pengumuman_service.dart';
 import '../pages/detail_pengumuman_page.dart';
+import '../pages/dashboard_page.dart';
+import '../pages/profile_page.dart';
 
 class PengumumanPage extends StatefulWidget {
   const PengumumanPage({super.key});
@@ -22,47 +24,41 @@ class _PengumumanPageState extends State<PengumumanPage> {
   ScrollController scrollController = ScrollController();
 
   Future<void> getPengumuman() async {
-  if (!hasMore) return;
+    if (!hasMore) return;
 
-  if (page == 1) {
-    isLoading = true;
-  } else {
-    isLoadingMore = true;
+    if (page == 1) {
+      isLoading = true;
+    } else {
+      isLoadingMore = true;
+    }
+
+    setState(() {});
+
+    try {
+      final result = await PengumumanService.getPengumuman(page: page);
+
+      List<Pengumuman> data = result["data"];
+      int lastPage = result["last_page"];
+
+      setState(() {
+        pengumumanList.addAll(data);
+
+        if (page >= lastPage) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
   }
-
-  setState(() {});
-
-  try {
-
-    final result = await PengumumanService.getPengumuman(page: page);
-
-    List<Pengumuman> data = result["data"];
-    int lastPage = result["last_page"];
-
-    setState(() {
-
-      pengumumanList.addAll(data);
-
-      if (page >= lastPage) {
-        hasMore = false;
-      } else {
-        page++;
-      }
-
-      isLoading = false;
-      isLoadingMore = false;
-
-    });
-
-  } catch (e) {
-
-    setState(() {
-      isLoading = false;
-      isLoadingMore = false;
-    });
-
-  }
-}
 
   String getWaktuPengumuman(String tanggal) {
     DateTime tanggalPost = DateTime.parse(tanggal);
@@ -87,14 +83,14 @@ class _PengumumanPageState extends State<PengumumanPage> {
 
     getPengumuman();
 
-   scrollController.addListener(() {
-  if (scrollController.position.pixels >=
-      scrollController.position.maxScrollExtent - 200) {
-    if (!isLoadingMore && hasMore) {
-      getPengumuman();
-    }
-  }
-});
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent - 200) {
+        if (!isLoadingMore && hasMore) {
+          getPengumuman();
+        }
+      }
+    });
   }
 
   @override
@@ -160,130 +156,190 @@ class _PengumumanPageState extends State<PengumumanPage> {
             const SizedBox(height: 20),
 
             /// LIST PENGUMUMAN
-           Expanded(
-  child: isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : RefreshIndicator(
-          onRefresh: () async {
+            Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          page = 1;
+                          hasMore = true;
+                          pengumumanList.clear();
 
-            page = 1;
-            hasMore = true;
-            pengumumanList.clear();
+                          await getPengumuman();
+                        },
+                        child: ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: pengumumanList.length + (hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index < pengumumanList.length) {
+                              final pengumuman = pengumumanList[index];
 
-            await getPengumuman();
-
-          },
-          child: ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: pengumumanList.length + (hasMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index < pengumumanList.length) {
-                          final pengumuman = pengumumanList[index];
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              children: [
-                                /// IMAGE
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.horizontal(
-                                    left: Radius.circular(20),
-                                  ),
-                                  child: Image.network(
-                                    pengumuman.foto,
-                                    width: 120,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
+                                child: Row(
+                                  children: [
+                                    /// IMAGE
+                                    ClipRRect(
+                                      borderRadius:
+                                          const BorderRadius.horizontal(
+                                        left: Radius.circular(20),
+                                      ),
+                                      child: Image.network(
+                                        pengumuman.foto,
+                                        width: 120,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
 
-                                /// CONTENT
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          pengumuman.judul,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          pengumuman.tanggal,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                    /// CONTENT
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        DetailPengumumanPage(
-                                                      pengumuman: pengumuman,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    const Color(0xffF4D03F),
-                                                foregroundColor: Colors.black,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                "Lihat Selengkapnya",
-                                                style: TextStyle(fontSize: 11),
+                                            Text(
+                                              pengumuman.judul,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
                                               ),
                                             ),
+                                            const SizedBox(height: 6),
                                             Text(
-                                              getWaktuPengumuman(
-                                                  pengumuman.tanggal),
+                                              pengumuman.tanggal,
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey,
                                               ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            DetailPengumumanPage(
+                                                          pengumuman:
+                                                              pengumuman,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xffF4D03F),
+                                                    foregroundColor:
+                                                        Colors.black,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    "Lihat Selengkapnya",
+                                                    style:
+                                                        TextStyle(fontSize: 11),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  getWaktuPengumuman(
+                                                      pengumuman.tanggal),
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                  ),
+                                                )
+                                              ],
                                             )
                                           ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          );
-                        } else {
-                          return const Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-            )),
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              );
+                            } else {
+                              return const Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      )),
+          ],
+        ),
+      ),
+      /// ================= BOTTOM NAV =================
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xff1E5631),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          selectedItemColor: const Color(0xffF4D03F),
+          unselectedItemColor: Colors.white70,
+
+          currentIndex: 1, // PROFILE AKTIF
+
+          onTap: (index) {
+
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DashboardPage(),
+                ),
+              );
+            }
+
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfilePage(),
+                ),
+              );
+            }
+
+          },
+
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.campaign),
+              label: "Pengumuman",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: "Profile",
+            ),
           ],
         ),
       ),

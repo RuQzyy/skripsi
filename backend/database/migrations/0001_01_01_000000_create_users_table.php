@@ -18,6 +18,8 @@ return new class extends Migration
 
             $table->string('nip')->nullable()->unique();
 
+            $table->string('kelas')->nullable();
+
             $table->string('email')->unique();
             $table->string('password');
 

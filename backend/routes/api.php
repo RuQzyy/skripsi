@@ -31,3 +31,5 @@ Route::get('/pengumuman/{id}', [PengumumanController::class, 'show']);
 Route::post('/pengumuman', [PengumumanController::class, 'store']);
 Route::put('/pengumuman/{id}', [PengumumanController::class, 'update']);
 Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy']);
+
+Route::middleware('auth:sanctum')->post('/update-password', [AuthController::class, 'updatePassword']);
