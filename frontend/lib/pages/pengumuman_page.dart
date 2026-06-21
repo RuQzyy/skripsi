@@ -108,7 +108,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
           children: [
             /// HEADER
             Container(
-              height: 120,
+              height: MediaQuery.of(context).size.width * 0.30,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: const BoxDecoration(
                 color: Color(0xff1E5631),
@@ -119,36 +119,39 @@ class _PengumumanPageState extends State<PengumumanPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Pengumuman",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    child: Text(
+                      "Pengumuman",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xffF4D03F),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      "${pengumumanList.length} Baru",
+                      "${pengumumanList.length}",
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -176,103 +179,166 @@ class _PengumumanPageState extends State<PengumumanPage> {
                               final pengumuman = pengumumanList[index];
 
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 16),
+                                margin: const EdgeInsets.only(bottom: 18),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    /// IMAGE
-                                    ClipRRect(
-                                      borderRadius:
-                                          const BorderRadius.horizontal(
-                                        left: Radius.circular(20),
-                                      ),
-                                      child: Image.network(
-                                        pengumuman.foto,
-                                        width: 120,
-                                        height: 100,
-                                        fit: BoxFit.cover,
-                                      ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
+                                  ],
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => DetailPengumumanPage(
+                                          pengumuman: pengumuman,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      /// FOTO
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(20),
+                                          topRight: Radius.circular(20),
+                                        ),
+                                        child: Image.network(
+                                          pengumuman.foto,
+                                          width: double.infinity,
+                                          height: MediaQuery.of(context).size.width * 0.45,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              height: 180,
+                                              color: Colors.grey.shade300,
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  size: 50,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
 
-                                    /// CONTENT
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
+                                      /// ISI
+                                      Padding(
+                                        padding: const EdgeInsets.all(16),
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               pengumuman.judul,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 14,
+                                                color: Color(0xff1E5631),
                                               ),
                                             ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              pengumuman.tanggal,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
+
+                                            const SizedBox(height: 8),
+
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.calendar_today,
+                                                  size: 14,
+                                                  color: Colors.grey,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Expanded(
+                                                  child: Text(
+                                                    pengumuman.tanggal,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(height: 10),
+
+                                            const SizedBox(height: 14),
+
                                             Row(
                                               mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                                                  MainAxisAlignment.spaceBetween,
                                               children: [
-                                                ElevatedButton(
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xffF4D03F)
+                                                        .withOpacity(0.2),
+                                                    borderRadius:
+                                                        BorderRadius.circular(20),
+                                                  ),
+                                                  child: Text(
+                                                    getWaktuPengumuman(
+                                                      pengumuman.tanggal,
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Color(0xff1E5631),
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                ElevatedButton.icon(
                                                   onPressed: () {
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) =>
                                                             DetailPengumumanPage(
-                                                          pengumuman:
-                                                              pengumuman,
+                                                          pengumuman: pengumuman,
                                                         ),
                                                       ),
                                                     );
                                                   },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
+                                                  icon: const Icon(
+                                                    Icons.arrow_forward,
+                                                    size: 16,
+                                                  ),
+                                                  label: const Text(
+                                                    "Detail",
+                                                  ),
+                                                  style: ElevatedButton.styleFrom(
                                                     backgroundColor:
                                                         const Color(0xffF4D03F),
-                                                    foregroundColor:
-                                                        Colors.black,
-                                                    shape:
-                                                        RoundedRectangleBorder(
+                                                    foregroundColor: Colors.black,
+                                                    elevation: 0,
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
+                                                          BorderRadius.circular(30),
                                                     ),
                                                   ),
-                                                  child: const Text(
-                                                    "Lihat Selengkapnya",
-                                                    style:
-                                                        TextStyle(fontSize: 11),
-                                                  ),
                                                 ),
-                                                Text(
-                                                  getWaktuPengumuman(
-                                                      pengumuman.tanggal),
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey,
-                                                  ),
-                                                )
                                               ],
-                                            )
+                                            ),
                                           ],
                                         ),
                                       ),
-                                    )
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               );
                             } else {

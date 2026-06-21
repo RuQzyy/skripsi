@@ -23,6 +23,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
+Route::middleware('auth:sanctum')->post(
+    '/connect-google',
+    [AuthController::class, 'connectGoogle']
+);
+
 // pengumuman
 
 Route::get('/pengumuman', [PengumumanController::class, 'index']);

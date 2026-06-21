@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'pengumuman_page.dart';
 import '../services/auth_service.dart';
+import '../services/google_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -11,61 +12,63 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-
   Map<String, dynamic>? user;
 
   Future<void> getUser() async {
+    final dataUser = await AuthService.getUser();
 
-  final dataUser = await AuthService.getUser();
+    setState(() {
+      user = dataUser;
 
-  setState(() {
-    user = dataUser;
+      namaController.text = user?["name"] ?? "";
+      nimController.text = user?["nisn"] ?? user?["nip"] ?? "";
+      kelasController.text = user?["kelas"] ?? "";
+    });
+  }
 
-    namaController.text = user?["name"] ?? "";
-    nimController.text = user?["nisn"] ?? user?["nip"] ?? "";
-    kelasController.text = user?["kelas"] ?? "";
-  });
-
-}
-
-@override
-void initState() {
-  super.initState();
-  getUser();
-}
+  @override
+  void initState() {
+    super.initState();
+    getUser();
+  }
 
   final TextEditingController namaController = TextEditingController();
   final TextEditingController nimController = TextEditingController();
   final TextEditingController kelasController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
- Widget buildTextField(
-  String hint,
-  TextEditingController controller, {
-  bool obscure = false,
-  bool readOnly = false,
-}) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: TextField(
-      controller: controller,
-      obscureText: obscure,
-      readOnly: readOnly,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: readOnly ? Colors.grey[200] : Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+  Widget buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool obscure = false,
+    bool readOnly = false,
+    IconData? icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: icon != null ? Icon(icon) : null,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,233 +76,319 @@ void initState() {
       backgroundColor: const Color(0xffEDEDED),
 
       body: SafeArea(
-        child: Column(
-          children: [
-
-          /// ================= HEADER + PROFILE =================
-Stack(
-  clipBehavior: Clip.none,
-  children: [
-
-    /// HEADER
-    Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        color: Color(0xff1E5631),
-        borderRadius: BorderRadius.only(
-          bottomRight: Radius.circular(60),
-        ),
-      ),
-      child: const Center(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 40),
-          child: Text(
-            "Profile",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ),
-
-    /// PROFILE
-    Positioned(
-      bottom: -110,
-      left: 0,
-      right: 0,
-      child: Column(
-        children: [
-
-          /// FOTO
-          const CircleAvatar(
-            radius: 45,
-            backgroundImage: NetworkImage(
-              "https://i.pravatar.cc/300",
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          /// NAMA
-          Text(
-          user?["name"] ?? "",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-
-          /// NIM
-          Text(
-          user?["nisn"] ?? user?["nip"] ?? "",
-            style: TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          /// KELAS
-          Text(
-          user?["kelas"] ?? "",
-            style: TextStyle(
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    )
-  ],
-),
-
-const SizedBox(height: 120),
-           
-
-            /// ================= FORM =================
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: user == null
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : SingleChildScrollView(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    const Text(
-                      "Ubah Profile Anda",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    buildTextField("Nama", namaController, readOnly: true),
-                    buildTextField("NIM / NIP", nimController, readOnly: true),
-                    buildTextField("Kelas", kelasController, readOnly: true),
-
-                    buildTextField("Password Baru", passwordController, obscure: true),
-                    buildTextField(
-                      "Konfirmasi Password",
-                      confirmPasswordController,
-                      obscure: true,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    /// BUTTON SIMPAN
-ElevatedButton(
-  onPressed: () async {
-
-    // VALIDASI PASSWORD KOSONG
-    if (passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password tidak boleh kosong"),
-        ),
-      );
-      return;
-    }
-
-    // VALIDASI PASSWORD SAMA ATAU TIDAK
-    if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Konfirmasi password tidak sama"),
-        ),
-      );
-      return;
-    }
-
-    try {
-
-      await AuthService.updatePassword(passwordController.text);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password berhasil diubah"),
-        ),
-      );
-
-      // kosongkan field password
-      passwordController.clear();
-      confirmPasswordController.clear();
-
-    } catch (e) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal mengubah password: $e"),
-        ),
-      );
-
-    }
-  },
-
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xffF4D03F),
-    foregroundColor: Colors.black,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    padding: const EdgeInsets.symmetric(
-      horizontal: 30,
-      vertical: 12,
-    ),
-  ),
-
-  child: const Text(
-    "Simpan",
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-),
-
-                    const SizedBox(height: 20),
-
-                    /// GOOGLE BUTTON
+                    /// HEADER
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
+                      width: double.infinity,
+                      padding: const EdgeInsets.only(
+                        top: 25,
+                        bottom: 80,
+                      ),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xff1E5631),
+                            Color(0xff2E7D32),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(60),
+                        ),
                       ),
                       child: const Center(
                         child: Text(
-                          "Hubungkan Akun Anda ke Google",
-                          style: TextStyle(fontSize: 13),
+                          "Profile Saya",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 20),
-
-                    /// FACE ID
-                    const Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            "Face ID",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                    Transform.translate(
+                      offset: const Offset(0, -50),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        ),
+                        child: Column(
+                          children: [
+                            /// CARD PROFILE
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 6),
+                                  )
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: const Color(0xff1E5631),
+                                    child: Text(
+                                      user?["name"]
+                                              ?.substring(0, 1)
+                                              .toUpperCase() ??
+                                          "U",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Text(
+                                    user?["name"] ?? "",
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    user?["nisn"] ?? user?["nip"] ?? "",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    user?["kelas"] ?? "",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 10),
-                          Icon(Icons.face, size: 50),
-                        ],
+
+                            const SizedBox(height: 25),
+
+                            /// INFORMASI AKUN
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 12,
+                                  )
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Informasi Akun",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  buildTextField(
+                                    "Nama",
+                                    namaController,
+                                    readOnly: true,
+                                    icon: Icons.person,
+                                  ),
+                                  buildTextField(
+                                    "NISN / NIP",
+                                    nimController,
+                                    readOnly: true,
+                                    icon: Icons.badge,
+                                  ),
+                                  buildTextField(
+                                    "Kelas",
+                                    kelasController,
+                                    readOnly: true,
+                                    icon: Icons.school,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 25),
+
+                            /// KEAMANAN AKUN
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 12,
+                                  )
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Keamanan Akun",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  buildTextField(
+                                    "Password Baru",
+                                    passwordController,
+                                    obscure: true,
+                                    icon: Icons.lock,
+                                  ),
+                                  buildTextField(
+                                    "Konfirmasi Password",
+                                    confirmPasswordController,
+                                    obscure: true,
+                                    icon: Icons.lock_outline,
+                                  ),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        if (passwordController.text.isEmpty ||
+                                            confirmPasswordController
+                                                .text.isEmpty) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Password tidak boleh kosong"),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        if (passwordController.text !=
+                                            confirmPasswordController.text) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Konfirmasi password tidak sama"),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        try {
+                                          await AuthService.updatePassword(
+                                            passwordController.text,
+                                          );
+
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Password berhasil diubah"),
+                                            ),
+                                          );
+
+                                          passwordController.clear();
+                                          confirmPasswordController.clear();
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text("Gagal: $e"),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xffF4D03F),
+                                        foregroundColor: Colors.black,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "Simpan Password",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            /// ================= FACE ID =================
+                            const Text(
+                              "Daftarkan Face ID",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 15),
+
+                            GestureDetector(
+                              onTap: () async {
+                                // REGISTER FACE ID
+                              },
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.face_retouching_natural,
+                                  size: 55,
+                                  color: Color(0xff1E5631),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                       ),
                     ),
-
-                    const SizedBox(height: 30),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
       ),
 
       /// ================= BOTTOM NAV =================
@@ -315,11 +404,8 @@ ElevatedButton(
           backgroundColor: Colors.transparent,
           selectedItemColor: const Color(0xffF4D03F),
           unselectedItemColor: Colors.white70,
-
           currentIndex: 2,
-
           onTap: (index) {
-
             if (index == 0) {
               Navigator.pushReplacement(
                 context,
@@ -337,9 +423,7 @@ ElevatedButton(
                 ),
               );
             }
-
           },
-
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

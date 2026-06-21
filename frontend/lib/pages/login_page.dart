@@ -213,32 +213,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     const SizedBox(height: 30),
-
-                    /// GOOGLE BUTTON
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: Image.asset(
-                          "assets/logo/google.png",
-                          height: 24,
-                        ),
-                        label: const Text(
-                          "Masuk Dengan Google",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.grey),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

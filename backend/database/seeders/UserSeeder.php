@@ -12,6 +12,23 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->insert([
 
+         // ADMIN
+            [
+                'name' => 'Administrator',
+                'photo' => 'default.png',
+                'nip' => null,
+                'nisn' => null,
+                'kelas' => null,
+                'email' => 'admin@gmail.com',
+                'phone' => '081111111111',
+                'password' => Hash::make('password123'),
+                'google_id' => null,
+                'face_id' => null,
+                'role' => 'admin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
             // GURU
             [
                 'name' => 'Budi Santoso',
