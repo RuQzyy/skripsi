@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'pengumuman_page.dart';
 import '../services/auth_service.dart';
-import '../services/google_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,15 +13,44 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? user;
 
+  String getPhotoUrl() {
+    if (user == null || user?["photo"] == null) {
+      return "";
+    }
+
+    String role = user?["role"]?.toString() ?? "siswa";
+
+    return "http://192.168.1.14:8000/storage/$role/${user?["photo"]}";
+  }
+
+  final TextEditingController namaController = TextEditingController();
+  final TextEditingController nimController = TextEditingController();
+  final TextEditingController kelasController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
   Future<void> getUser() async {
     final dataUser = await AuthService.getUser();
+
+    if (!mounted) return;
 
     setState(() {
       user = dataUser;
 
-      namaController.text = user?["name"] ?? "";
-      nimController.text = user?["nisn"] ?? user?["nip"] ?? "";
-      kelasController.text = user?["kelas"] ?? "";
+      namaController.text = user?["name"]?.toString() ?? "";
+
+      nimController.text = (user?["nisn"] ?? user?["nip"] ?? "").toString();
+
+      kelasController.text = user?["kelas"] != null
+          ? (user?["kelas"]["nama_kelas"] ?? "").toString()
+          : "";
+
+      emailController.text = user?["email"]?.toString() ?? "";
+
+      phoneController.text = user?["phone"]?.toString() ?? "";
     });
   }
 
@@ -31,13 +59,6 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     getUser();
   }
-
-  final TextEditingController namaController = TextEditingController();
-  final TextEditingController nimController = TextEditingController();
-  final TextEditingController kelasController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
 
   Widget buildTextField(
     String label,
@@ -61,20 +82,27 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
         ),
       ),
     );
   }
 
   @override
+  void dispose() {
+    namaController.dispose();
+    nimController.dispose();
+    kelasController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffEDEDED),
-
       body: SafeArea(
         child: user == null
             ? const Center(
@@ -96,8 +124,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             Color(0xff1E5631),
                             Color(0xff2E7D32),
                           ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.only(
                           bottomRight: Radius.circular(60),
@@ -118,9 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Transform.translate(
                       offset: const Offset(0, -50),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
                           children: [
                             /// CARD PROFILE
@@ -143,21 +167,29 @@ class _ProfilePageState extends State<ProfilePage> {
                                   CircleAvatar(
                                     radius: 50,
                                     backgroundColor: const Color(0xff1E5631),
-                                    child: Text(
-                                      user?["name"]
-                                              ?.substring(0, 1)
-                                              .toUpperCase() ??
-                                          "U",
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 30,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    backgroundImage: user?["photo"] != null &&
+                                            user!["photo"].toString().isNotEmpty
+                                        ? NetworkImage(getPhotoUrl())
+                                        : null,
+                                    child: user?["photo"] == null ||
+                                            user!["photo"].toString().isEmpty
+                                        ? Text(
+                                            user?["name"]
+                                                    ?.toString()
+                                                    .substring(0, 1)
+                                                    .toUpperCase() ??
+                                                "U",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(height: 15),
                                   Text(
-                                    user?["name"] ?? "",
+                                    user?["name"]?.toString() ?? "",
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -166,14 +198,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    user?["nisn"] ?? user?["nip"] ?? "",
+                                    (user?["nisn"] ?? user?["nip"] ?? "")
+                                        .toString(),
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                     ),
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    user?["kelas"] ?? "",
+                                    user?["kelas"] != null
+                                        ? (user?["kelas"]["nama_kelas"] ?? "")
+                                            .toString()
+                                        : "",
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                     ),
@@ -190,12 +226,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 12,
-                                  )
-                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,24 +256,30 @@ class _ProfilePageState extends State<ProfilePage> {
                                     readOnly: true,
                                     icon: Icons.school,
                                   ),
+                                  buildTextField(
+                                    "Email",
+                                    emailController,
+                                    readOnly: true,
+                                    icon: Icons.email,
+                                  ),
+                                  buildTextField(
+                                    "Nomor Telepon",
+                                    phoneController,
+                                    readOnly: true,
+                                    icon: Icons.phone,
+                                  ),
                                 ],
                               ),
                             ),
 
                             const SizedBox(height: 25),
 
-                            /// KEAMANAN AKUN
+                            /// PASSWORD
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 12,
-                                  )
-                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +316,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  "Password tidak boleh kosong"),
+                                                "Password tidak boleh kosong",
+                                              ),
                                             ),
                                           );
                                           return;
@@ -292,32 +329,39 @@ class _ProfilePageState extends State<ProfilePage> {
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  "Konfirmasi password tidak sama"),
+                                                "Konfirmasi password tidak sama",
+                                              ),
                                             ),
                                           );
                                           return;
                                         }
 
-                                        try {
-                                          await AuthService.updatePassword(
-                                            passwordController.text,
-                                          );
+                                        bool success =
+                                            await AuthService.updatePassword(
+                                          passwordController.text,
+                                        );
 
+                                        if (!mounted) return;
+
+                                        if (success) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  "Password berhasil diubah"),
+                                                "Password berhasil diubah",
+                                              ),
                                             ),
                                           );
 
                                           passwordController.clear();
                                           confirmPasswordController.clear();
-                                        } catch (e) {
+                                        } else {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
-                                            SnackBar(
-                                              content: Text("Gagal: $e"),
+                                            const SnackBar(
+                                              content: Text(
+                                                "Gagal update password",
+                                              ),
                                             ),
                                           );
                                         }
@@ -340,44 +384,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 30),
-
-                            /// ================= FACE ID =================
-                            const Text(
-                              "Daftarkan Face ID",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 15),
-
-                            GestureDetector(
-                              onTap: () async {
-                                // REGISTER FACE ID
-                              },
-                              child: Container(
-                                width: 90,
-                                height: 90,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.face_retouching_natural,
-                                  size: 55,
-                                  color: Color(0xff1E5631),
-                                ),
                               ),
                             ),
 
@@ -404,7 +410,9 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.transparent,
           selectedItemColor: const Color(0xffF4D03F),
           unselectedItemColor: Colors.white70,
-          currentIndex: 2,
+
+          currentIndex: 2, // PROFILE aktif
+
           onTap: (index) {
             if (index == 0) {
               Navigator.pushReplacement(
@@ -424,6 +432,7 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             }
           },
+
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

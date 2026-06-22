@@ -3,86 +3,96 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-
   static const String baseUrl = "http://192.168.1.14:8000/api";
 
   /// ================= LOGIN =================
- static Future<Map<String, dynamic>> login(
-  String nisnNip,
-  String password,
-) async {
+  static Future<Map<String, dynamic>> login(
+    String nisnNip,
+    String password,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/login"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({
+          "nisn_nip": nisnNip,
+          "password": password,
+        }),
+      );
 
-  try {
+      print("LOGIN STATUS: ${response.statusCode}");
+      print("LOGIN BODY: ${response.body}");
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/login"),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: jsonEncode({
-        "nisn_nip": nisnNip,
-        "password": password,
-      }),
-    );
+      final data = jsonDecode(response.body);
 
-    print("LOGIN STATUS: ${response.statusCode}");
-    print("LOGIN BODY: ${response.body}");
+      if (response.statusCode == 200) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    final data = jsonDecode(response.body);
+        /// HAPUS CACHE LAMA
+        await prefs.clear();
 
-    if (response.statusCode == 200) {
+        /// SIMPAN TOKEN
+        await prefs.setString(
+          "token",
+          data["token"].toString(),
+        );
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+        /// SIMPAN USER FULL
+        await prefs.setString(
+          "user",
+          jsonEncode(data["user"]),
+        );
 
-      await prefs.setString("token", data["token"]);
-      await prefs.setString("user", jsonEncode(data["user"]));
+        /// SIMPAN DATA PENTING
+        await prefs.setString(
+          "name",
+          (data["user"]["name"] ?? "").toString(),
+        );
 
-      return {
-        "success": true,
-        "data": data
-      };
+        await prefs.setString(
+          "role",
+          (data["user"]["role"] ?? "").toString(),
+        );
 
-    } else {
+        return {
+          "success": true,
+          "data": data,
+        };
+      } else {
+        return {
+          "success": false,
+          "message": data["message"] ?? "Login gagal",
+        };
+      }
+    } catch (e) {
+      print("LOGIN ERROR: $e");
 
       return {
         "success": false,
-        "message": data["message"]
+        "message": "Error: $e",
       };
-
     }
-
-  } catch (e) {
-
-    print("LOGIN ERROR: $e");
-
-    return {
-      "success": false,
-      "message": "Error: $e"
-    };
-
   }
-
-}
 
   /// ================= LOGOUT =================
   static Future<bool> logout() async {
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
     String? token = prefs.getString("token");
 
     print("TOKEN SAAT LOGOUT : $token");
 
     try {
-
       if (token != null) {
-
         final response = await http.post(
           Uri.parse("$baseUrl/logout"),
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "Bearer $token"
+            "Authorization": "Bearer $token",
           },
         );
 
@@ -90,107 +100,113 @@ class AuthService {
         print("LOGOUT BODY : ${response.body}");
       }
 
-      /// hapus semua session
+      /// HAPUS SESSION
       await prefs.clear();
 
       return true;
-
     } catch (e) {
-
       print("ERROR LOGOUT : $e");
 
       await prefs.clear();
 
       return true;
+    }
+  }
 
+  /// ================= GET TOKEN =================
+  static Future<String?> getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    return prefs.getString("token");
+  }
+
+  /// ================= GET NAME =================
+  static Future<String?> getName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    return prefs.getString("name");
+  }
+
+  /// ================= GET ROLE =================
+  static Future<String?> getRole() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    return prefs.getString("role");
+  }
+
+  /// ================= GET USER =================
+  static Future<Map<String, dynamic>?> getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final userString = prefs.getString("user");
+
+    print("USER STRING : $userString");
+
+    if (userString == null || userString.isEmpty) {
+      return null;
     }
 
+    try {
+      final decoded = jsonDecode(userString);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      return null;
+    } catch (e) {
+      print("GET USER ERROR : $e");
+      return null;
+    }
   }
 
-  static Future<String?> getToken() async {
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString("token");
-
-  }
-
-  static Future<String?> getName() async {
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString("name");
-
-  }
-
-  static Future<String?> getRole() async {
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString("role");
-
-  }
-
-  static Future<Map<String, dynamic>?> getUser() async {
-
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-
-  String? userString = prefs.getString("user");
-
-  if (userString != null) {
-    return jsonDecode(userString);
-  }
-
-  return null;
-
-}
-
+  /// ================= CHECK LOGIN =================
   static Future<bool> isLoggedIn() async {
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
     String? token = prefs.getString("token");
 
-    if (token != null) {
-      return true;
-    }
-
-    return false;
-
+    return token != null;
   }
 
   /// ================= UPDATE PASSWORD =================
-static Future<bool> updatePassword(String password) async {
+  static Future<bool> updatePassword(
+    String password,
+  ) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString("token");
+    String? token = prefs.getString("token");
 
-  try {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/update-password"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "password": password,
+        }),
+      );
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/update-password"),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": "Bearer $token"
-      },
-      body: jsonEncode({
-        "password": password
-      }),
-    );
+      print(
+        "UPDATE PASSWORD STATUS : ${response.statusCode}",
+      );
 
-    print("UPDATE PASSWORD STATUS : ${response.statusCode}");
-    print("UPDATE PASSWORD BODY : ${response.body}");
+      print(
+        "UPDATE PASSWORD BODY : ${response.body}",
+      );
 
-    if (response.statusCode == 200) {
-      return true;
+      if (response.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print("UPDATE PASSWORD ERROR : $e");
+
+      return false;
     }
-
-    return false;
-
-  } catch (e) {
-
-    print("UPDATE PASSWORD ERROR : $e");
-    return false;
-
   }
-
-}
-
 }

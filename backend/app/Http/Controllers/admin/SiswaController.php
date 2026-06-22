@@ -4,39 +4,46 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Imports\SiswaImport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SiswaTemplateExport;
 
 class SiswaController extends Controller
 {
     public function index(Request $request)
     {
-        $kelas = $request->kelas;
-        $search = $request->search;
+        $kelas = Kelas::latest()->get();
 
-        $siswa = User::where('role', 'siswa')
+        $siswa = User::with('kelas')
+            ->where('role', 'siswa')
 
-            ->when($kelas, function ($query) use ($kelas) {
-                $query->where('kelas', $kelas);
+            ->when($request->kelas, function ($query) use ($request) {
+
+                $query->where('kelas_id', $request->kelas);
+
             })
 
-            ->when($search, function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('nisn', 'like', "%{$search}%");
+            ->when($request->search, function ($query) use ($request) {
+
+                $query->where(function ($q) use ($request) {
+
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                      ->orWhere('nisn', 'like', '%' . $request->search . '%');
+
+                });
+
             })
 
             ->latest()
             ->get();
 
-        $listKelas = User::where('role', 'siswa')
-            ->select('kelas')
-            ->distinct()
-            ->pluck('kelas');
-
         return view('admin.siswa', compact(
             'siswa',
-            'listKelas'
+            'kelas'
         ));
     }
 
@@ -45,7 +52,7 @@ class SiswaController extends Controller
         $request->validate([
             'name' => 'required',
             'nisn' => 'required|unique:users',
-            'kelas' => 'required',
+            'kelas_id' => 'required',
             'email' => 'required|email|unique:users',
             'phone' => 'required',
             'password' => 'required|min:6',
@@ -68,7 +75,7 @@ class SiswaController extends Controller
         User::create([
             'name' => $request->name,
             'nisn' => $request->nisn,
-            'kelas' => $request->kelas,
+            'kelas_id' => $request->kelas_id,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
@@ -76,7 +83,10 @@ class SiswaController extends Controller
             'role' => 'siswa',
         ]);
 
-        return back()->with('success', 'Siswa berhasil ditambahkan');
+        return back()->with(
+            'success',
+            'Siswa berhasil ditambahkan'
+        );
     }
 
     public function update(Request $request, $id)
@@ -86,7 +96,7 @@ class SiswaController extends Controller
         $request->validate([
             'name' => 'required',
             'nisn' => 'required|unique:users,nisn,' . $id,
-            'kelas' => 'required',
+            'kelas_id' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'required',
         ]);
@@ -96,7 +106,10 @@ class SiswaController extends Controller
         if ($request->hasFile('photo')) {
 
             if ($photo != 'default.png') {
-                Storage::disk('public')->delete('siswa/' . $photo);
+
+                Storage::disk('public')
+                    ->delete('siswa/' . $photo);
+
             }
 
             $file = $request->file('photo');
@@ -108,16 +121,29 @@ class SiswaController extends Controller
             $photo = $filename;
         }
 
-        $siswa->update([
+        $data = [
             'name' => $request->name,
             'nisn' => $request->nisn,
-            'kelas' => $request->kelas,
+            'kelas_id' => $request->kelas_id,
             'email' => $request->email,
             'phone' => $request->phone,
             'photo' => $photo,
-        ]);
+        ];
 
-        return back()->with('success', 'Siswa berhasil diupdate');
+        // UPDATE PASSWORD JIKA DIISI
+        if ($request->password) {
+
+            $data['password'] =
+                Hash::make($request->password);
+
+        }
+
+        $siswa->update($data);
+
+        return back()->with(
+            'success',
+            'Siswa berhasil diupdate'
+        );
     }
 
     public function destroy($id)
@@ -125,11 +151,36 @@ class SiswaController extends Controller
         $siswa = User::findOrFail($id);
 
         if ($siswa->photo != 'default.png') {
-            Storage::disk('public')->delete('siswa/' . $siswa->photo);
+
+            Storage::disk('public')
+                ->delete('siswa/' . $siswa->photo);
+
         }
 
         $siswa->delete();
 
-        return back()->with('success', 'Siswa berhasil dihapus');
+        return back()->with(
+            'success',
+            'Siswa berhasil dihapus'
+        );
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        Excel::import(new SiswaImport, $request->file('file'));
+
+        return back()->with('success', 'Import siswa berhasil');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(
+            new SiswaTemplateExport,
+            'template_siswa.xlsx'
+        );
     }
 }

@@ -21,9 +21,10 @@ class AuthController extends Controller
 
 
         // cari user berdasarkan NISN atau NIP
-        $user = User::where('nisn', $request->nisn_nip)
-                    ->orWhere('nip', $request->nisn_nip)
-                    ->first();
+       $user = User::with('kelas')
+            ->where('nisn', $request->nisn_nip)
+            ->orWhere('nip', $request->nisn_nip)
+            ->first();
 
 
         // jika user tidak ditemukan
@@ -60,15 +61,22 @@ class AuthController extends Controller
             'token' => $token,
 
             'user' => [
+
                 'id' => $user->id,
                 'name' => $user->name,
                 'nisn' => $user->nisn,
-                'kelas' => $user->kelas,
                 'nip' => $user->nip,
+
+                'kelas' => $user->kelas ? [
+                    'id' => $user->kelas->id,
+                    'nama_kelas' => $user->kelas->nama_kelas,
+                ] : null,
+
                 'email' => $user->email,
                 'photo' => $user->photo,
                 'phone' => $user->phone,
                 'role' => $user->role,
+
             ]
 
         ]);

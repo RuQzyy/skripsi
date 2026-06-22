@@ -3,7 +3,7 @@ class UserModel {
   final String name;
   final String? nisn;
   final String? nip;
-  final String? kelas;
+  final Map<String, dynamic>? kelas;
   final String? email;
   final String? photo;
   final String? phone;
