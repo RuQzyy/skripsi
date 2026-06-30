@@ -183,4 +183,18 @@ class SiswaController extends Controller
             'template_siswa.xlsx'
         );
     }
+
+        public function resetFaceId($id)
+    {
+        $siswa = User::findOrFail($id);
+
+        $siswa->update([
+            'face_id' => null
+        ]);
+
+        return back()->with(
+            'success',
+            'Face ID siswa berhasil direset.'
+        );
+    }
 }

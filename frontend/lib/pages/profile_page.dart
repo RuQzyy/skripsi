@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'pengumuman_page.dart';
 import '../services/auth_service.dart';
+import 'register_face_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -33,7 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
       TextEditingController();
 
   Future<void> getUser() async {
-    final dataUser = await AuthService.getUser();
+    final dataUser = await AuthService.fetchUser();
 
     if (!mounted) return;
 
@@ -388,6 +389,93 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
 
                             const SizedBox(height: 40),
+
+                          Container(
+  padding: const EdgeInsets.all(20),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(24),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+
+      const Text(
+        "Face ID",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+      const SizedBox(height: 15),
+
+      Row(
+        children: [
+
+          Icon(
+            user?["face_id"] == null
+                ? Icons.face_retouching_off
+                : Icons.verified,
+            color: user?["face_id"] == null
+                ? Colors.red
+                : Colors.green,
+          ),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Text(
+              user?["face_id"] == null
+                  ? "Face ID belum terdaftar"
+                  : "Face ID sudah terdaftar",
+              style: const TextStyle(
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // ===============================
+      // Tombol hanya muncul jika belum daftar
+      // ===============================
+
+      if (user?["face_id"] == null) ...[
+        const SizedBox(height: 20),
+
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RegisterFacePage(),
+                ),
+              );
+
+              // Refresh data user setelah kembali
+              await getUser();
+            },
+            icon: const Icon(Icons.face),
+            label: const Text("Daftarkan Face ID"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff1E5631),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+
+    ],
+  ),
+)
                           ],
                         ),
                       ),

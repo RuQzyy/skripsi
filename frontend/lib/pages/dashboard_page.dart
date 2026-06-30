@@ -7,6 +7,10 @@ import '../models/pengumuman_model.dart';
 import '../services/pengumuman_service.dart';
 import '../pages/pengumuman_page.dart';
 import '../pages/detail_pengumuman_page.dart';
+import '../models/attendance_setting.dart';
+import '../services/attendance_service.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -16,21 +20,114 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  double? userLatitude;
+  double? userLongitude;
+  double distance = 0;
+  bool canAttendance = false;
   String formattedDate = "";
   String name = "";
+  AttendanceSetting? setting;
+  bool isLoadingSetting = true;
   List<Pengumuman> pengumumanList = [];
 
   bool isLoadingPengumuman = true;
 
- Future<void> getUser() async {
+  Future getCurrentLocation() async {
+    print("1. Mulai ambil lokasi");
 
-  final user = await AuthService.getUser();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
-  setState(() {
-    name = user?["name"] ?? "";
-  });
+    print("2. Service : $serviceEnabled");
 
-}
+    if (!serviceEnabled) {
+      print("Service mati");
+
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    print("3. Permission awal : $permission");
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      print("4. Permission setelah request : $permission");
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      print("Permission ditolak permanen");
+
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+
+    print("5. Latitude : ${position.latitude}");
+
+    print("6. Longitude : ${position.longitude}");
+
+    setState(() {
+      userLatitude = position.latitude;
+
+      userLongitude = position.longitude;
+    });
+
+    calculateDistance();
+  }
+
+  void calculateDistance() {
+    if (setting == null || userLatitude == null || userLongitude == null) {
+      return;
+    }
+
+    double meter = Geolocator.distanceBetween(
+      userLatitude!,
+      userLongitude!,
+      setting!.latitude,
+      setting!.longitude,
+    );
+
+    bool allowed = meter <= setting!.radius;
+
+    print("===== ABSENSI =====");
+
+    print("Latitude User : $userLatitude");
+
+    print("Longitude User : $userLongitude");
+
+    print("Jarak : $meter");
+
+    print("Radius : ${setting!.radius}");
+
+    print("Boleh Absen : $allowed");
+
+    setState(() {
+      distance = meter;
+
+      canAttendance = allowed;
+    });
+  }
+
+  Future<void> loadSetting() async {
+    final result = await AttendanceService().getSetting();
+
+    setState(() {
+      setting = result;
+
+      isLoadingSetting = false;
+    });
+
+    getCurrentLocation();
+  }
+
+  Future<void> getUser() async {
+    final user = await AuthService.getUser();
+
+    setState(() {
+      name = user?["name"] ?? "";
+    });
+  }
 
   Future<void> getPengumuman() async {
     try {
@@ -45,6 +142,25 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (e) {
       setState(() {
         isLoadingPengumuman = false;
+      });
+    }
+  }
+
+  Future getAttendanceSetting() async {
+    try {
+      final result = await AttendanceService().getSetting();
+
+      setState(() {
+        setting = result;
+
+        isLoadingSetting = false;
+      });
+
+      // TAMBAHKAN INI
+      await getCurrentLocation();
+    } catch (e) {
+      setState(() {
+        isLoadingSetting = false;
       });
     }
   }
@@ -95,8 +211,12 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
 
     initializeDate();
+
     getUser();
+
     getPengumuman();
+
+    getAttendanceSetting();
   }
 
   Future<void> initializeDate() async {
@@ -260,7 +380,25 @@ class _DashboardPageState extends State<DashboardPage> {
                           const Divider(),
 
                           /// ================= ISI CARD (DINAMIS) =================
-                          isAbsensi ? _absensiView() : _riwayatView(),
+                          /// ================= ISI CARD (DINAMIS) =================
+
+                          if (isLoadingSetting)
+                            const Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          else if (setting == null)
+                            const Center(
+                              child: Text(
+                                "Gagal memuat data absensi",
+                              ),
+                            )
+                          else
+                            isAbsensi
+                                ? _absensiView(
+                                    setting!,
+                                    canAttendance,
+                                  )
+                                : _riwayatView()
                         ],
                       ),
                     ),
@@ -477,109 +615,202 @@ class _DashboardPageState extends State<DashboardPage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     "Area Absensi",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 10),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // ================= MAP =================
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        "assets/images/4.jpg",
-                        height: 230,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-
-                    // ================= CARD (OVERLAP ±5%) =================
-                    Positioned(
-                      bottom: -125, // ⬅️ INI YANG NGATUR OVERLAP (±5%)
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xff1E5631),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Pastikan Anda Melakukan Absensi Pada Area Yang Sudah Ditentukan",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+              if (isLoadingSetting)
+                const Center(
+                  child: CircularProgressIndicator(),
+                )
+              else if (setting != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      /// GOOGLE MAP
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: SizedBox(
+                          height: 230,
+                          child: GoogleMap(
+                            zoomControlsEnabled: false,
+                            myLocationButtonEnabled: false,
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(
+                                setting!.latitude,
+                                setting!.longitude,
                               ),
+                              zoom: 17,
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: const [
-                                Icon(Icons.location_on,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Madrasah Aliyah Negeri 1 Ambon",
+                            markers: {
+                              Marker(
+                                markerId: const MarkerId("sekolah"),
+                                position: LatLng(
+                                  setting!.latitude,
+                                  setting!.longitude,
+                                ),
+                                infoWindow: InfoWindow(
+                                  title: setting!.namaLokasi,
+                                ),
+                              ),
+                            },
+                            circles: {
+                              Circle(
+                                circleId: const CircleId("radius"),
+                                center: LatLng(
+                                  setting!.latitude,
+                                  setting!.longitude,
+                                ),
+                                radius: setting!.radius.toDouble(),
+                                fillColor: Colors.green.withOpacity(0.2),
+                                strokeColor: Colors.green,
+                                strokeWidth: 2,
+                              ),
+                            },
+                          ),
+                        ),
+                      ),
+
+                      /// CARD
+                      Positioned(
+                        bottom: -125,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff1E5631),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Pastikan Anda Melakukan Absensi Pada Area Yang Sudah Ditentukan",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      setting!.namaLokasi,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.access_time,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Lakukan Absensi Sebelum ${setting!.jamTerlambat.substring(0, 5)}",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.social_distance,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "${distance.toStringAsFixed(0)} meter",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    canAttendance
+                                        ? "Di dalam area absensi"
+                                        : "Di luar area absensi",
                                     style: TextStyle(
-                                        color: Colors.white, fontSize: 12),
+                                      color: canAttendance
+                                          ? Colors.green
+                                          : Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: const [
-                                Icon(Icons.access_time,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Lakukan Absensi Sebelum 06:30",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xffF4D03F),
-                                  foregroundColor: Colors.black,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.radio_button_checked,
+                                    color: Colors.white,
+                                    size: 18,
                                   ),
-                                ),
-                                child: const Text(
-                                  "Lakukan Absensi",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Radius ${setting!.radius} meter",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {},
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xffF4D03F),
+                                    foregroundColor: Colors.black,
+                                  ),
+                                  child: const Text(
+                                    "Lakukan Absensi",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(
-                  height: 150), // ⬅️ WAJIB biar tidak ketimpa konten bawah
+              const SizedBox(height: 150),
             ],
           ),
         ),
@@ -632,7 +863,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-Widget _absensiView() {
+Widget _absensiView(
+  AttendanceSetting setting,
+  bool canAttendance,
+) {
   return Column(
     children: [
       Row(
@@ -663,27 +897,39 @@ Widget _absensiView() {
         ],
       ),
       const SizedBox(height: 14),
-      const Text(
-        "Pastikan Anda Melakukan Absensi\nSebelum 07:30",
+      Text(
+        "Pastikan Anda Melakukan Absensi\nSebelum ${setting.jamTerlambat.substring(0, 5)}",
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12),
+        style: const TextStyle(
+          fontSize: 12,
+        ),
       ),
       const SizedBox(height: 16),
       SizedBox(
         width: double.infinity,
         height: 42,
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: canAttendance
+              ? () {
+                  print(
+                    "Bisa melakukan absensi",
+                  );
+                }
+              : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xffF4D03F),
+            backgroundColor:
+                canAttendance ? const Color(0xffF4D03F) : Colors.grey,
             foregroundColor: Colors.black,
+            disabledBackgroundColor: Colors.grey.shade400,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
           ),
-          child: const Text(
-            "Lakukan Absensi",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          child: Text(
+            canAttendance ? "Lakukan Absensi" : "Di Luar Area Absensi",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

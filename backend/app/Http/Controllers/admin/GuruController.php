@@ -163,4 +163,6 @@ class GuruController extends Controller
             'Data guru berhasil dihapus'
         );
     }
+
+
 }

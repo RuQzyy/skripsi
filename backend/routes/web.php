@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PengumumanController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\AbsensiSettingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -43,12 +44,27 @@ Route::middleware(['auth', 'admin'])
         Route::resource('kelas', KelasController::class)
         ->names('kelas');
 
-     Route::post('/siswa/import', [SiswaController::class, 'import'])
-    ->name('siswa.import');
+        Route::post('/siswa/import', [SiswaController::class, 'import'])
+        ->name('siswa.import');
 
-Route::get('/siswa/template/download',
-    [SiswaController::class, 'downloadTemplate'])
-    ->name('siswa.template');
+        Route::get('/siswa/template/download',
+            [SiswaController::class, 'downloadTemplate'])
+            ->name('siswa.template');
+
+            Route::get(
+            '/pengaturan-absensi',
+            [AbsensiSettingController::class, 'index']
+        )->name('absensi.setting');
+
+        Route::put(
+            '/pengaturan-absensi',
+            [AbsensiSettingController::class, 'update']
+        )->name('absensi.setting.update');
+
+       Route::post(
+            '/siswa/{id}/reset-face',
+            [SiswaController::class, 'resetFaceId']
+        )->name('siswa.resetFace');
 
     });
 

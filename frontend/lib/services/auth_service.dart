@@ -160,6 +160,39 @@ class AuthService {
     }
   }
 
+  static Future<Map<String, dynamic>?> fetchUser() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  String? token = prefs.getString("token");
+
+  try {
+    final response = await http.get(
+      Uri.parse("$baseUrl/me"),
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final user = jsonDecode(response.body);
+
+      // Update cache
+      await prefs.setString(
+        "user",
+        jsonEncode(user),
+      );
+
+      return user;
+    }
+
+    return null;
+  } catch (e) {
+    print("FETCH USER ERROR : $e");
+    return null;
+  }
+}
+
   /// ================= CHECK LOGIN =================
   static Future<bool> isLoggedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

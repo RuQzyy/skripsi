@@ -171,6 +171,24 @@
 
                             </div>
 
+                            <div class="flex items-center gap-2">
+
+                                <iconify-icon
+                                    icon="{{ $item->face_id ? 'solar:shield-check-bold' : 'solar:shield-cross-bold' }}">
+                                </iconify-icon>
+
+                                @if ($item->face_id)
+                                    <span class="text-green-600 font-medium">
+                                        Face ID Terdaftar
+                                    </span>
+                                @else
+                                    <span class="text-red-600 font-medium">
+                                        Face ID Belum Terdaftar
+                                    </span>
+                                @endif
+
+                            </div>
+
                         </div>
 
                         {{-- BUTTON --}}
@@ -179,14 +197,14 @@
                             {{-- EDIT --}}
                             <button
                                 onclick="openEditModal(
-                                '{{ $item->id }}',
-                                @js($item->name),
-                                '{{ $item->nisn }}',
-                                '{{ $item->kelas_id }}',
-                                '{{ $item->email }}',
-                                '{{ $item->phone }}',
-                                '{{ $item->photo == 'default.png' ? asset('images/default.png') : asset('storage/siswa/' . $item->photo) }}'
-                            )"
+            '{{ $item->id }}',
+            @js($item->name),
+            '{{ $item->nisn }}',
+            '{{ $item->kelas_id }}',
+            '{{ $item->email }}',
+            '{{ $item->phone }}',
+            '{{ $item->photo == 'default.png' ? asset('images/default.png') : asset('storage/siswa/' . $item->photo) }}'
+        )"
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-xl">
 
                                 Edit
@@ -210,6 +228,24 @@
                             </form>
 
                         </div>
+                        @if ($item->face_id)
+                            <div class="mt-3">
+
+                                <form action="{{ route('admin.siswa.resetFace', $item->id) }}" method="POST"
+                                    onsubmit="return confirm('Reset Face ID siswa ini?')">
+
+                                    @csrf
+
+                                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl">
+
+                                        Reset Face ID
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+                        @endif
 
                     </div>
 
@@ -419,96 +455,86 @@
     </div>
 
     {{-- MODAL IMPORT --}}
-<div id="importModal"
-    class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div id="importModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
 
-    <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden">
+        <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden">
 
-        {{-- HEADER --}}
-        <div class="flex justify-between items-center p-5 border-b">
+            {{-- HEADER --}}
+            <div class="flex justify-between items-center p-5 border-b">
 
-            <h2 class="font-bold text-lg">
-                Import Excel Siswa
-            </h2>
+                <h2 class="font-bold text-lg">
+                    Import Excel Siswa
+                </h2>
 
-            <button type="button" onclick="closeImportModal()">
-                <iconify-icon icon="solar:close-circle-bold" width="28">
-                </iconify-icon>
-            </button>
+                <button type="button" onclick="closeImportModal()">
+                    <iconify-icon icon="solar:close-circle-bold" width="28">
+                    </iconify-icon>
+                </button>
+
+            </div>
+
+            {{-- FORM --}}
+            <form action="{{ route('admin.siswa.import') }}" method="POST" enctype="multipart/form-data">
+
+                @csrf
+
+                <div class="p-5 space-y-4">
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+
+                        <p class="font-semibold">
+                            Format kolom:
+                        </p>
+
+                        <p class="text-sm mt-2">
+                            name | nisn | kelas_id | email | phone | password
+                        </p>
+
+                        <a href="{{ route('admin.siswa.template') }}"
+                            class="inline-flex items-center gap-2 mt-4 bg-green-600 text-white px-4 py-2 rounded-xl">
+
+                            <iconify-icon icon="solar:download-bold"></iconify-icon>
+
+                            Download Template
+
+                        </a>
+
+                    </div>
+
+                    <div>
+
+                        <label class="block mb-2 text-sm font-medium">
+                            Pilih File Excel
+                        </label>
+
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required
+                            class="w-full border rounded-xl p-3">
+
+                    </div>
+
+                </div>
+
+                <div class="p-5 border-t flex justify-end gap-3">
+
+                    <button type="button" onclick="closeImportModal()" class="px-5 py-2 border rounded-xl">
+
+                        Batal
+
+                    </button>
+
+                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-xl">
+
+                        Import
+
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
-        {{-- FORM --}}
-        <form action="{{ route('admin.siswa.import') }}"
-            method="POST"
-            enctype="multipart/form-data">
-
-            @csrf
-
-            <div class="p-5 space-y-4">
-
-                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-
-                    <p class="font-semibold">
-                        Format kolom:
-                    </p>
-
-                    <p class="text-sm mt-2">
-                        name | nisn | kelas_id | email | phone | password
-                    </p>
-
-                    <a href="{{ route('admin.siswa.template') }}"
-                        class="inline-flex items-center gap-2 mt-4 bg-green-600 text-white px-4 py-2 rounded-xl">
-
-                        <iconify-icon icon="solar:download-bold"></iconify-icon>
-
-                        Download Template
-
-                    </a>
-
-                </div>
-
-                <div>
-
-                    <label class="block mb-2 text-sm font-medium">
-                        Pilih File Excel
-                    </label>
-
-                    <input
-                        type="file"
-                        name="file"
-                        accept=".xlsx,.xls,.csv"
-                        required
-                        class="w-full border rounded-xl p-3">
-
-                </div>
-
-            </div>
-
-            <div class="p-5 border-t flex justify-end gap-3">
-
-                <button type="button"
-                    onclick="closeImportModal()"
-                    class="px-5 py-2 border rounded-xl">
-
-                    Batal
-
-                </button>
-
-                <button type="submit"
-                    class="bg-green-600 text-white px-5 py-2 rounded-xl">
-
-                    Import
-
-                </button>
-
-            </div>
-
-        </form>
-
     </div>
-
-</div>
 
     <script>
         // ================= TAMBAH =================

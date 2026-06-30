@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Kelas;
+use App\Models\Absensi;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -37,5 +38,10 @@ class User extends Authenticatable
             'kelas_id',
             'id'
         );
+    }
+
+    public function absensis()
+    {
+        return $this->hasMany(Absensi::class);
     }
 }
