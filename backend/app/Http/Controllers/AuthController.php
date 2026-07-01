@@ -139,4 +139,35 @@ class AuthController extends Controller
 
 }
 
+public function updatePhoto(Request $request)
+{
+    $request->validate([
+        'photo' => 'required|image|max:2048',
+    ]);
+
+    $user = $request->user();
+
+    $role = $user->role; // 'siswa', 'guru', dll
+
+    // Hapus foto lama kalau ada
+    if ($user->photo) {
+        $oldPath = public_path("storage/$role/{$user->photo}");
+        if (file_exists($oldPath)) {
+            unlink($oldPath);
+        }
+    }
+
+    $file = $request->file('photo');
+    $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+    $file->move(public_path("storage/$role"), $filename);
+
+    $user->update(['photo' => $filename]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Foto berhasil diperbarui.',
+        'photo' => $filename,
+    ]);
+}
+
 }

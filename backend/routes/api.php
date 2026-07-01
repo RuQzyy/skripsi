@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\PengumumanController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AbsensiSettingController;
 use App\Http\Controllers\Api\FaceController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\PasswordResetController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -33,6 +35,17 @@ Route::middleware('auth:sanctum')->group(function () {
         );
 
     });
+
+    Route::middleware('auth:sanctum')->post(
+        '/attendance',
+        [AttendanceController::class, 'store']
+    );
+
+     Route::get('/attendance/today', [AttendanceController::class, 'today']);
+
+     Route::get('/attendance/riwayat', [AttendanceController::class, 'riwayat']);
+
+     Route::post('/update-photo', [AuthController::class, 'updatePhoto']);
 
 });
 
@@ -68,3 +81,6 @@ Route::middleware('auth:sanctum')->post(
 );
 
 Route::post('/verify-face', [FaceController::class, 'verify']);
+Route::post('/forgot-password/send-otp',    [PasswordResetController::class, 'sendOtp']);
+Route::post('/forgot-password/verify-otp',  [PasswordResetController::class, 'verifyOtp']);
+Route::post('/forgot-password/reset',       [PasswordResetController::class, 'resetPassword']);

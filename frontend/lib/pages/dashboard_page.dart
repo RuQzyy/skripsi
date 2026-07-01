@@ -11,6 +11,7 @@ import '../models/attendance_setting.dart';
 import '../services/attendance_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../pages/attendance_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,6 +25,10 @@ class _DashboardPageState extends State<DashboardPage> {
   double? userLongitude;
   double distance = 0;
   bool canAttendance = false;
+  Map<String, dynamic>? todayAttendance;
+  bool isLoadingTodayAttendance = true;
+  List<dynamic> riwayatList = [];
+  bool isLoadingRiwayat = true;
   String formattedDate = "";
   String name = "";
   AttendanceSetting? setting;
@@ -129,6 +134,36 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  Future<void> getTodayAttendance() async {
+    try {
+      final result = await AttendanceService().getTodayAttendance();
+
+      setState(() {
+        todayAttendance = result;
+        isLoadingTodayAttendance = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingTodayAttendance = false;
+      });
+    }
+  }
+
+  Future<void> getRiwayatAttendance() async {
+    try {
+      final result = await AttendanceService().getRiwayatAttendance();
+
+      setState(() {
+        riwayatList = result;
+        isLoadingRiwayat = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingRiwayat = false;
+      });
+    }
+  }
+
   Future<void> getPengumuman() async {
     try {
       final result = await PengumumanService.getPengumuman(limit: 3);
@@ -206,7 +241,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  @override
+ @override
   void initState() {
     super.initState();
 
@@ -217,6 +252,10 @@ class _DashboardPageState extends State<DashboardPage> {
     getPengumuman();
 
     getAttendanceSetting();
+
+    getTodayAttendance();
+
+    getRiwayatAttendance();
   }
 
   Future<void> initializeDate() async {
@@ -240,8 +279,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             children: [
               /// ================= HEADER + CARD ABSENSI =================
-              Stack(
-                clipBehavior: Clip.none,
+              Column(
                 children: [
                   /// ================= HEADER HIJAU =================
                   Container(
@@ -296,11 +334,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   /// ================= CARD PUTIH =================
-                  Positioned(
-                    top: 130,
-                    left: 20,
-                    right: 20,
+                  Transform.translate(
+                    offset: const Offset(0, -100),
                     child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -380,7 +417,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           const Divider(),
 
                           /// ================= ISI CARD (DINAMIS) =================
-                          /// ================= ISI CARD (DINAMIS) =================
 
                           if (isLoadingSetting)
                             const Center(
@@ -392,22 +428,25 @@ class _DashboardPageState extends State<DashboardPage> {
                                 "Gagal memuat data absensi",
                               ),
                             )
-                          else
+                         else
                             isAbsensi
-                                ? _absensiView(
+                                ?  _absensiView(
+                                    context,
                                     setting!,
                                     canAttendance,
+                                    todayAttendance,
+                                    () {
+                                      getTodayAttendance();
+                                      getRiwayatAttendance();
+                                    },
                                   )
-                                : _riwayatView()
+                               : _riwayatView(riwayatList, isLoadingRiwayat, context)
                         ],
                       ),
                     ),
                   ),
                 ],
               ),
-
-              /// ================= SPACING =================
-              const SizedBox(height: 220),
 
               /// ================= DATE CARD =================
               Container(
@@ -631,8 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
               else if (setting != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Stack(
-                    clipBehavior: Clip.none,
+                  child: Column(
                     children: [
                       /// GOOGLE MAP
                       ClipRRect(
@@ -678,139 +716,187 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
 
+                      const SizedBox(height: 12),
+
                       /// CARD
-                      Positioned(
-                        bottom: -125,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xff1E5631),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Pastikan Anda Melakukan Absensi Pada Area Yang Sudah Ditentukan",
-                                style: TextStyle(
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff1E5631),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Pastikan Anda Melakukan Absensi Pada Area Yang Sudah Ditentukan",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on,
                                   color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  size: 18,
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      setting!.namaLokasi,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Lakukan Absensi Sebelum ${setting!.jamTerlambat.substring(0, 5)}",
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    setting!.namaLokasi,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.social_distance,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "${distance.toStringAsFixed(0)} meter",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    canAttendance
-                                        ? "Di dalam area absensi"
-                                        : "Di luar area absensi",
-                                    style: TextStyle(
-                                      color: canAttendance
-                                          ? Colors.green
-                                          : Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.radio_button_checked,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Radius ${setting!.radius} meter",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xffF4D03F),
-                                    foregroundColor: Colors.black,
-                                  ),
-                                  child: const Text(
-                                    "Lakukan Absensi",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.access_time,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Lakukan Absensi Sebelum ${setting!.jamTerlambat.substring(0, 5)}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.social_distance,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "${distance.toStringAsFixed(0)} meter",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  canAttendance
+                                      ? "Di dalam area absensi"
+                                      : "Di luar area absensi",
+                                  style: TextStyle(
+                                    color: canAttendance
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.radio_button_checked,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Radius ${setting!.radius} meter",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                           SizedBox(
+                              width: double.infinity,
+                              height: 42,
+                              child: ElevatedButton(
+                                onPressed:
+                                    (canAttendance && todayAttendance == null)
+                                        ? () async {
+                                        print(
+                                            ">>> TOMBOL ABSENSI (Area Absensi) DITEKAN <<<");
+                                        try {
+                                          final result = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const AttendancePage(),
+                                            ),
+                                          );
+
+                                          print(">>> RESULT = $result <<<");
+
+                                          if (result == true &&
+                                              context.mounted) {
+                                            getTodayAttendance();
+                                            getRiwayatAttendance();
+
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content:
+                                                    Text("Absensi berhasil"),
+                                                backgroundColor: Colors.green,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e, stack) {
+                                          print(">>> ERROR NAVIGASI: $e");
+                                          print(stack);
+                                        }
+                                      }
+                                    : null,
+                               style: ElevatedButton.styleFrom(
+                                  backgroundColor: todayAttendance != null
+                                      ? const Color(0xff2E7D32)
+                                      : (canAttendance
+                                          ? const Color(0xffF4D03F)
+                                          : Colors.grey),
+                                  foregroundColor: todayAttendance != null
+                                      ? Colors.white
+                                      : Colors.black,
+                                  disabledBackgroundColor: Colors.grey.shade400,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: Text(
+                                  todayAttendance != null
+                                      ? "Sudah Melakukan Absensi"
+                                      : (canAttendance
+                                          ? "Lakukan Absensi"
+                                          : "Di Luar Area Absensi"),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
 
-              const SizedBox(height: 150),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -864,9 +950,23 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 Widget _absensiView(
+  BuildContext context,
   AttendanceSetting setting,
   bool canAttendance,
+  Map<String, dynamic>? todayAttendance,
+  VoidCallback onAbsensiBerhasil,
 ) {
+  final bool sudahAbsen = todayAttendance != null;
+
+  final String statusText =
+      sudahAbsen ? (todayAttendance["status"] ?? "Hadir") : "-";
+
+  final String jamText = sudahAbsen
+      ? ((todayAttendance["jam_masuk"] ?? "").toString().length >= 5
+          ? todayAttendance["jam_masuk"].toString().substring(0, 5)
+          : "-")
+      : "-";
+
   return Column(
     children: [
       Row(
@@ -889,11 +989,11 @@ Widget _absensiView(
         ],
       ),
       const SizedBox(height: 8),
-      const Row(
+      Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Hadir", style: TextStyle(fontWeight: FontWeight.bold)),
-          Text("06:36", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(statusText, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(jamText, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
       const SizedBox(height: 14),
@@ -909,24 +1009,49 @@ Widget _absensiView(
         width: double.infinity,
         height: 42,
         child: ElevatedButton(
-          onPressed: canAttendance
-              ? () {
-                  print(
-                    "Bisa melakukan absensi",
-                  );
+          onPressed: (canAttendance && !sudahAbsen)
+              ? () async {
+                  print(">>> TOMBOL ABSENSI (tab Absensi) DITEKAN <<<");
+                  try {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AttendancePage(),
+                      ),
+                    );
+
+                    print(">>> RESULT = $result <<<");
+
+                    if (result == true && context.mounted) {
+                      onAbsensiBerhasil();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Absensi berhasil"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e, stack) {
+                    print(">>> ERROR NAVIGASI: $e");
+                    print(stack);
+                  }
                 }
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canAttendance ? const Color(0xffF4D03F) : Colors.grey,
-            foregroundColor: Colors.black,
+            backgroundColor: sudahAbsen
+                ? const Color(0xff2E7D32)
+                : (canAttendance ? const Color(0xffF4D03F) : Colors.grey),
+            foregroundColor: sudahAbsen ? Colors.white : Colors.black,
             disabledBackgroundColor: Colors.grey.shade400,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
           ),
           child: Text(
-            canAttendance ? "Lakukan Absensi" : "Di Luar Area Absensi",
+            sudahAbsen
+                ? "Sudah Melakukan Absensi"
+                : (canAttendance ? "Lakukan Absensi" : "Di Luar Area Absensi"),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
             ),
@@ -937,74 +1062,247 @@ Widget _absensiView(
   );
 }
 
-Widget _riwayatView() {
+Widget _riwayatView(List<dynamic> riwayatList, bool isLoading, BuildContext context) {
+  if (isLoading) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  if (riwayatList.isEmpty) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Center(child: Text("Belum ada riwayat absensi")),
+    );
+  }
+
+  final latest = riwayatList.first; // data absensi terbaru
+
+  String tanggal = "-";
+  try {
+    final parsedDate = DateTime.parse(latest["tanggal"]);
+    tanggal = DateFormat("EEEE dd-MM-yyyy", "id_ID").format(parsedDate);
+  } catch (_) {}
+
+  final String jamMasuk = (latest["jam_masuk"] ?? "").toString().length >= 5
+      ? latest["jam_masuk"].toString().substring(0, 5)
+      : "-";
+  final String status = latest["status"] ?? "-";
+
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Text(
         "Status Kehadiran",
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
       const SizedBox(height: 4),
-      const Text(
-        "Hadir",
-        style: TextStyle(
-          color: Color(0xff2E7D32),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 16),
+      Text(status, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+
+      const SizedBox(height: 18),
+
+      /// TIMELINE (titik - garis putus2 - icon - garis putus2 - titik)
       Row(
-        children: const [
-          Icon(Icons.circle, size: 8, color: Color(0xff2E7D32)),
-          Expanded(child: Divider()),
-          Icon(Icons.person),
-          Expanded(child: Divider()),
-          Icon(Icons.circle, size: 8, color: Color(0xff2E7D32)),
+        children: [
+          _dot(),
+          Expanded(child: _dashedLine()),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(
+              color: Color(0xff1E5631),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.badge, size: 16, color: Colors.white),
+          ),
+          Expanded(child: _dashedLine()),
+          _dot(),
         ],
       ),
-      const SizedBox(height: 16),
+
+      const SizedBox(height: 18),
+
+      /// TANGGAL & WAKTU ABSENSI
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
+        children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Tanggal", style: TextStyle(fontSize: 12)),
-              SizedBox(height: 4),
-              Text("Senin 01-08-2026",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Tanggal", style: TextStyle(fontSize: 12, color: Colors.black54)),
+              const SizedBox(height: 4),
+              Text(tanggal, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text("Waktu Absensi", style: TextStyle(fontSize: 12)),
-              SizedBox(height: 4),
-              Text("06:30", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Waktu Absensi", style: TextStyle(fontSize: 12, color: Colors.black54)),
+              const SizedBox(height: 4),
+              Text(jamMasuk, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ],
       ),
+
       const SizedBox(height: 20),
+
+      /// TOMBOL LIHAT SEMUA
       SizedBox(
         width: double.infinity,
-        height: 42,
+        height: 44,
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () => _showRiwayatSheet(context, riwayatList),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffF4D03F),
             foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           ),
-          child: const Text(
-            "Lihat Semua",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: const Text("Lihat Semua", style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ),
     ],
+  );
+}
+Widget _dot() {
+  return Container(
+    width: 12,
+    height: 12,
+    decoration: const BoxDecoration(
+      color: Color(0xff1E5631),
+      shape: BoxShape.circle,
+    ),
+  );
+}
+
+Widget _dashedLine() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4),
+    child: CustomPaint(
+      size: const Size(double.infinity, 2),
+      painter: _DashedLinePainter(),
+    ),
+  );
+}
+
+class _DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xff1E5631)
+      ..strokeWidth = 2;
+    const dashWidth = 4.0;
+    const dashSpace = 4.0;
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+void _showRiwayatSheet(BuildContext context, List<dynamic> riwayatList) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: SizedBox(
+          height: 400,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Riwayat Absensi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 12),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _riwayatListLama(riwayatList), // isi list lama (card per item)
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+Widget _riwayatListLama(List<dynamic> riwayatList) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: riwayatList.map((item) {
+      String tanggal = "-";
+      try {
+        final parsedDate = DateTime.parse(item["tanggal"]);
+        tanggal = DateFormat("dd-MM-yyyy", "id_ID").format(parsedDate);
+      } catch (_) {}
+
+      final String jamMasuk = (item["jam_masuk"] ?? "").toString().length >= 5
+          ? item["jam_masuk"].toString().substring(0, 5)
+          : "-";
+      final String status = item["status"] ?? "-";
+
+      final bool isHadir = status == "Hadir";
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xffF7F7F7),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              status,
+              style: TextStyle(
+                color: isHadir ? const Color(0xff2E7D32) : Colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Tanggal", style: TextStyle(fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text(
+                        tanggal,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text("Waktu Absensi",
+                          style: TextStyle(fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text(
+                        jamMasuk,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }).toList(),
   );
 }

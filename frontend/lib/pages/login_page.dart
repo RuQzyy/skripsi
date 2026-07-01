@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'dashboard_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   bool isLoading = false;
+  bool obscurePassword = true;
 
   void login() async {
     if (nisnNipController.text.isEmpty || passwordController.text.isEmpty) {
@@ -160,9 +162,9 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 8),
 
-                    TextField(
+                   TextField(
                       controller: passwordController,
-                      obscureText: true,
+                      obscureText: obscurePassword,
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -170,16 +172,39 @@ class _LoginPageState extends State<LoginPage> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 12),
 
                     /// LUPA PASSWORD
-                    const Text(
-                      "Lupa Password?",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Lupa Password?",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xff1E5631),
+                        ),
                       ),
                     ),
 

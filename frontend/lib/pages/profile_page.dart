@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dashboard_page.dart';
 import 'pengumuman_page.dart';
 import '../services/auth_service.dart';
@@ -13,6 +15,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? user;
+  File? _selectedImage;
+  bool _uploadingPhoto = false;
 
   String getPhotoUrl() {
     if (user == null || user?["photo"] == null) {
@@ -53,6 +57,56 @@ class _ProfilePageState extends State<ProfilePage> {
 
       phoneController.text = user?["phone"]?.toString() ?? "";
     });
+  }
+
+  Future<void> pickAndUploadPhoto() async {
+    final picker = ImagePicker();
+
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      _selectedImage = File(picked.path);
+      _uploadingPhoto = true;
+    });
+
+    final result = await AuthService.updatePhoto(picked.path);
+
+    if (!mounted) return;
+
+    setState(() {
+      _uploadingPhoto = false;
+    });
+
+    if (result["success"] == true) {
+      await getUser(); // refresh data user
+
+      setState(() {
+        _selectedImage = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Foto berhasil diperbarui"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedImage = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result["message"] ?? "Gagal upload foto"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -165,28 +219,77 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               child: Column(
                                 children: [
-                                  CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: const Color(0xff1E5631),
-                                    backgroundImage: user?["photo"] != null &&
-                                            user!["photo"].toString().isNotEmpty
-                                        ? NetworkImage(getPhotoUrl())
-                                        : null,
-                                    child: user?["photo"] == null ||
-                                            user!["photo"].toString().isEmpty
-                                        ? Text(
-                                            user?["name"]
-                                                    ?.toString()
-                                                    .substring(0, 1)
-                                                    .toUpperCase() ??
-                                                "U",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 30,
-                                              fontWeight: FontWeight.bold,
+                                  Stack(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 50,
+                                        backgroundColor:
+                                            const Color(0xff1E5631),
+                                        backgroundImage: _selectedImage != null
+                                            ? FileImage(_selectedImage!)
+                                            : (user?["photo"] != null &&
+                                                    user!["photo"]
+                                                        .toString()
+                                                        .isNotEmpty
+                                                ? NetworkImage(getPhotoUrl())
+                                                : null) as ImageProvider?,
+                                        child: _selectedImage == null &&
+                                                (user?["photo"] == null ||
+                                                    user!["photo"]
+                                                        .toString()
+                                                        .isEmpty)
+                                            ? Text(
+                                                user?["name"]
+                                                        ?.toString()
+                                                        .substring(0, 1)
+                                                        .toUpperCase() ??
+                                                    "U",
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 30,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: GestureDetector(
+                                          onTap: _uploadingPhoto
+                                              ? null
+                                              : pickAndUploadPhoto,
+                                          child: Container(
+                                            width: 30,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                              color: _uploadingPhoto
+                                                  ? Colors.grey
+                                                  : const Color(0xffF4D03F),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 2,
+                                              ),
                                             ),
-                                          )
-                                        : null,
+                                            child: _uploadingPhoto
+                                                ? const Padding(
+                                                    padding: EdgeInsets.all(6),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.camera_alt,
+                                                    size: 16,
+                                                    color: Colors.black,
+                                                  ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 15),
                                   Text(

@@ -7,16 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Absensi extends Model
 {
     protected $fillable = [
-
         'user_id',
-
         'tanggal',
-
         'jam_masuk',
+        'status',
+        'latitude',
+        'longitude',
+        'foto',
+    ];
 
-        'jam_pulang',
-
-        'status'
+    protected $casts = [
+        'tanggal' => 'date',
     ];
 
     public function user()

@@ -186,10 +186,7 @@ class _RegisterFacePageState extends State<RegisterFacePage>
       children: [
         // RotatedBox jauh lebih ringan dibanding Transform.rotate
         // karena tidak memaksa offscreen GPU layer per-frame
-        RotatedBox(
-          quarterTurns: 2, // 180°
-          child: CameraPreview(controller!),
-        ),
+        CameraPreview(controller!),
 
         // Gradient overlay atas & bawah agar elemen UI lebih kontras
         Container(

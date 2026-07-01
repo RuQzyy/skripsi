@@ -10,7 +10,19 @@ class AbsensiSettingController extends Controller
 {
     public function index()
     {
-        $setting = AbsensiSetting::first();
+        $setting = AbsensiSetting::firstOrCreate(
+            [],
+            [
+                'jam_absen_mulai' => '07:00:00',
+                'jam_terlambat' => '07:30:00',
+                'jam_absen_selesai' => '08:00:00',
+                'nama_lokasi' => '',
+                'latitude' => -3.6951234,
+                'longitude' => 128.1812345,
+                'radius' => 100,
+                'is_active' => 1,
+            ]
+        );
 
         return view('admin.absensi-setting', compact('setting'));
     }
@@ -30,7 +42,7 @@ class AbsensiSettingController extends Controller
             'is_active' => 'required'
         ]);
 
-        $setting = AbsensiSetting::first();
+        $setting = AbsensiSetting::firstOrCreate([]);
 
         $setting->update([
             'jam_absen_mulai' => $request->jam_absen_mulai,

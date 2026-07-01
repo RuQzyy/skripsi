@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static const String baseUrl = "http://192.168.1.14:8000/api";
+  // static const String baseUrl = "http://10.143.208.37:8000/api";
 
   /// ================= LOGIN =================
   static Future<Map<String, dynamic>> login(
@@ -200,6 +201,102 @@ class AuthService {
     String? token = prefs.getString("token");
 
     return token != null;
+  }
+
+ /// ================= SEND OTP =================
+  static Future<Map<String, dynamic>> sendOtp(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/forgot-password/send-otp"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({"email": email}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    }
+  }
+
+  /// ================= VERIFY OTP =================
+  static Future<Map<String, dynamic>> verifyOtp(
+    String email,
+    String otp,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/forgot-password/verify-otp"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({"email": email, "otp": otp}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    }
+  }
+
+  /// ================= RESET PASSWORD =================
+  static Future<Map<String, dynamic>> resetPassword(
+    String email,
+    String otp,
+    String password,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/forgot-password/reset"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({
+          "email": email,
+          "otp": otp,
+          "password": password,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    }
+  }
+
+  /// ================= UPDATE PHOTO =================
+  static Future<Map<String, dynamic>> updatePhoto(String imagePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String? token = prefs.getString("token");
+
+    try {
+      var request = http.MultipartRequest(
+        "POST",
+        Uri.parse("$baseUrl/update-photo"),
+      );
+
+      request.headers.addAll({
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath("photo", imagePath),
+      );
+
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
+      final data = jsonDecode(body);
+
+      return data;
+    } catch (e) {
+      return {
+        "success": false,
+        "message": e.toString(),
+      };
+    }
   }
 
   /// ================= UPDATE PASSWORD =================
