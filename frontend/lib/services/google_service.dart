@@ -5,8 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class GoogleService {
 
-  static const String baseUrl = "http://192.168.1.14:8000/api";
-  // static const String baseUrl = "http://10.143.208.37:8000/api";
+static const String baseUrl = "http://192.168.1.14:8000/api";
+  // static const String baseUrl = "http://10.170.1.37:8000/api";
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
 

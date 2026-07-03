@@ -9,7 +9,7 @@ import '../models/attendance_setting.dart';
 
 class AttendanceService {
   static const String baseUrl = "http://192.168.1.14:8000/api";
-  // static const String baseUrl = "http://10.143.208.37:8000/api";
+  // static const String baseUrl = "http://10.170.1.37:8000/api";
 
   // ==========================
   // Ambil Pengaturan Absensi

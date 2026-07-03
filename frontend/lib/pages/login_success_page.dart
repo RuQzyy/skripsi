@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../services/auth_service.dart';
 
 class LoginSuccessPage extends StatefulWidget {
   const LoginSuccessPage({super.key});
@@ -11,12 +12,27 @@ class LoginSuccessPage extends StatefulWidget {
 
 class _LoginSuccessPageState extends State<LoginSuccessPage> {
 
-  @override
+ @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    _redirectAfterLogin();
+  }
+
+  Future<void> _redirectAfterLogin() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    final user = await AuthService.getUser();
+    final role = (user?["role"] ?? "siswa").toString().toLowerCase();
+
+    if (!mounted) return;
+
+    if (role == "guru") {
+      Navigator.pushReplacementNamed(context, "/guru-dashboard");
+    } else {
       Navigator.pushReplacementNamed(context, "/dashboard");
-    });
+    }
   }
 
   @override

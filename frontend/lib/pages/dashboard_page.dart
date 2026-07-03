@@ -676,16 +676,29 @@ class _DashboardPageState extends State<DashboardPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: SizedBox(
-                          height: 230,
+                          height: 280,
                           child: GoogleMap(
-                            zoomControlsEnabled: false,
-                            myLocationButtonEnabled: false,
+                            zoomControlsEnabled: true,
+                            myLocationButtonEnabled: true,
+                            myLocationEnabled: true,
+                            zoomGesturesEnabled: true,
+                            scrollGesturesEnabled: true,
+                            rotateGesturesEnabled: true,
+                            tiltGesturesEnabled: false,
                             initialCameraPosition: CameraPosition(
                               target: LatLng(
                                 setting!.latitude,
                                 setting!.longitude,
                               ),
-                              zoom: 17,
+                              // Zoom menyesuaikan radius:
+                              // radius kecil (< 100m) → zoom 18
+                              // radius sedang (< 500m) → zoom 16
+                              // radius besar → zoom 14
+                              zoom: setting!.radius < 100
+                                  ? 18
+                                  : setting!.radius < 500
+                                      ? 16
+                                      : 14,
                             ),
                             markers: {
                               Marker(
@@ -707,9 +720,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                   setting!.longitude,
                                 ),
                                 radius: setting!.radius.toDouble(),
-                                fillColor: Colors.green.withOpacity(0.2),
-                                strokeColor: Colors.green,
-                                strokeWidth: 2,
+                                fillColor: Colors.green.withOpacity(0.15),
+                                strokeColor: const Color(0xff1E5631),
+                                strokeWidth: 3,
                               ),
                             },
                           ),
@@ -1212,97 +1225,356 @@ void _showRiwayatSheet(BuildContext context, List<dynamic> riwayatList) {
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) {
-      return Padding(
-        padding: const EdgeInsets.all(20),
-        child: SizedBox(
-          height: 400,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Riwayat Absensi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 12),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: _riwayatListLama(riwayatList), // isi list lama (card per item)
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
+    builder: (_) => _RiwayatSheet(riwayatList: riwayatList),
   );
 }
-Widget _riwayatListLama(List<dynamic> riwayatList) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: riwayatList.map((item) {
-      String tanggal = "-";
-      try {
-        final parsedDate = DateTime.parse(item["tanggal"]);
-        tanggal = DateFormat("dd-MM-yyyy", "id_ID").format(parsedDate);
-      } catch (_) {}
 
-      final String jamMasuk = (item["jam_masuk"] ?? "").toString().length >= 5
-          ? item["jam_masuk"].toString().substring(0, 5)
-          : "-";
-      final String status = item["status"] ?? "-";
+class _RiwayatSheet extends StatefulWidget {
+  final List<dynamic> riwayatList;
 
-      final bool isHadir = status == "Hadir";
+  const _RiwayatSheet({required this.riwayatList});
 
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xffF7F7F7),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              status,
-              style: TextStyle(
-                color: isHadir ? const Color(0xff2E7D32) : Colors.orange,
-                fontWeight: FontWeight.w600,
+  @override
+  State<_RiwayatSheet> createState() => _RiwayatSheetState();
+}
+
+class _RiwayatSheetState extends State<_RiwayatSheet> {
+  String filterStatus = "Semua"; // Semua, Hadir, Terlambat
+  DateTime? filterTanggal;
+
+ List<dynamic> get filtered {
+    return widget.riwayatList.where((item) {
+      // Filter status
+      if (filterStatus != "Semua") {
+        final itemStatus = (item["status"] ?? "").toString().trim().toLowerCase();
+        final selectedStatus = filterStatus.trim().toLowerCase();
+        if (itemStatus != selectedStatus) return false;
+      }
+
+      // Filter tanggal
+      if (filterTanggal != null) {
+        try {
+          final parsed = DateTime.parse(item["tanggal"]);
+          if (parsed.year != filterTanggal!.year ||
+              parsed.month != filterTanggal!.month ||
+              parsed.day != filterTanggal!.day) {
+            return false;
+          }
+        } catch (_) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+  }
+
+  Future<void> pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: filterTanggal ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xff1E5631),
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() => filterTanggal = picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Container(
+      height: screenHeight * 0.85,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // HANDLE BAR
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+
+          const SizedBox(height: 16),
+
+          // JUDUL
+          const Text(
+            "Riwayat Absensi",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+
+          const SizedBox(height: 16),
+
+          // FILTER STATUS
+          const Text(
+            "Filter Status",
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: ["Semua", "Hadir", "Terlambat"].map((status) {
+              final isActive = filterStatus == status;
+              return GestureDetector(
+                onTap: () => setState(() => filterStatus = status),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? const Color(0xff1E5631)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isActive
+                          ? const Color(0xff1E5631)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isActive ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // FILTER TANGGAL
+          const Text(
+            "Filter Tanggal",
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: pickDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: filterTanggal != null
+                        ? const Color(0xff1E5631)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: filterTanggal != null
+                          ? const Color(0xff1E5631)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Tanggal", style: TextStyle(fontSize: 12)),
-                      const SizedBox(height: 4),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: filterTanggal != null
+                            ? Colors.white
+                            : Colors.black54,
+                      ),
+                      const SizedBox(width: 6),
                       Text(
-                        tanggal,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        filterTanggal != null
+                            ? DateFormat("dd-MM-yyyy").format(filterTanggal!)
+                            : "Pilih Tanggal",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: filterTanggal != null
+                              ? Colors.white
+                              : Colors.black87,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text("Waktu Absensi",
-                          style: TextStyle(fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text(
-                        jamMasuk,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
+              ),
+              if (filterTanggal != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => setState(() => filterTanggal = null),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      size: 14,
+                      color: Colors.red.shade400,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      );
-    }).toList(),
-  );
+            ],
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+
+          // JUMLAH HASIL
+          Text(
+            "${filtered.length} data ditemukan",
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+
+          const SizedBox(height: 8),
+
+          // LIST
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 48,
+                          color: Colors.grey.shade300,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Tidak ada data",
+                          style: TextStyle(color: Colors.black45),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final item = filtered[index];
+
+                      String tanggal = "-";
+                      try {
+                        final parsedDate = DateTime.parse(item["tanggal"]);
+                        tanggal =
+                            DateFormat("dd-MM-yyyy", "id_ID").format(parsedDate);
+                      } catch (_) {}
+
+                      final String jamMasuk =
+                          (item["jam_masuk"] ?? "").toString().length >= 5
+                              ? item["jam_masuk"].toString().substring(0, 5)
+                              : "-";
+                      final String status = item["status"] ?? "-";
+                      final bool isHadir = status == "Hadir";
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffF7F7F7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isHadir
+                                ? const Color(0xff1E5631).withOpacity(0.2)
+                                : Colors.orange.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Status badge
+                            Container(
+                              width: 4,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color:
+                                    isHadir ? const Color(0xff1E5631) : Colors.orange,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    status,
+                                    style: TextStyle(
+                                      color: isHadir
+                                          ? const Color(0xff1E5631)
+                                          : Colors.orange,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    tanggal,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text(
+                                  "Jam Masuk",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.black45,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  jamMasuk,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _riwayatListLama(List<dynamic> riwayatList) {
+  return const SizedBox.shrink(); // tidak dipakai lagi tapi tetap ada supaya tidak error
 }

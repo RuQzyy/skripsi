@@ -1,0 +1,315 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../services/guru_service.dart';
+
+class GuruRiwayatSiswaPage extends StatefulWidget {
+  final int siswaId;
+  final String siswaName;
+
+  const GuruRiwayatSiswaPage({
+    super.key,
+    required this.siswaId,
+    required this.siswaName,
+  });
+
+  @override
+  State<GuruRiwayatSiswaPage> createState() => _GuruRiwayatSiswaPageState();
+}
+
+class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
+  Map<String, dynamic>? data;
+  bool isLoading = true;
+  String filterStatus = "Semua";
+
+  List<dynamic> get filteredRiwayat {
+    final list = data?["riwayat"] ?? [];
+    if (filterStatus == "Semua") return list;
+    return list
+        .where((r) =>
+            (r["status"] ?? "").toString().trim().toLowerCase() ==
+            filterStatus.trim().toLowerCase())
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final result = await GuruService.getRiwayatSiswa(widget.siswaId);
+      setState(() {
+        data = result["success"] == true ? result["data"] : null;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statistik = data?["statistik"];
+
+    return Scaffold(
+      backgroundColor: const Color(0xffEDEDED),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // HEADER
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(8, 16, 20, 24),
+              decoration: const BoxDecoration(
+                color: Color(0xff1E5631),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.siswaName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              data?["siswa"]?["nisn"] ?? "-",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  if (statistik != null) ...[
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          _miniStat("Hadir",
+                              (statistik["hadir"] ?? 0) as int, Colors.white),
+                          _miniDivider(),
+                          _miniStat("Terlambat",
+                              (statistik["terlambat"] ?? 0) as int,
+                              const Color(0xffF4D03F)),
+                          _miniDivider(),
+                          _miniStat("Total",
+                              (statistik["total"] ?? 0) as int, Colors.white70),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // FILTER
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ["Semua", "Hadir", "Terlambat"].map((s) {
+                    final isActive = filterStatus == s;
+                    return GestureDetector(
+                      onTap: () => setState(() => filterStatus = s),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xff1E5631)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isActive
+                                ? const Color(0xff1E5631)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          s,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isActive ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // LIST
+            Expanded(
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Color(0xff1E5631)),
+                    )
+                  : filteredRiwayat.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.history,
+                                  size: 48, color: Colors.grey.shade300),
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Belum ada riwayat absensi",
+                                style: TextStyle(color: Colors.black45),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: filteredRiwayat.length,
+                          itemBuilder: (context, index) {
+                            final item = filteredRiwayat[index];
+
+                            String tanggal = "-";
+                            try {
+                              tanggal = DateFormat("EEEE, dd MMM yyyy", "id_ID")
+                                  .format(DateTime.parse(item["tanggal"].toString()));
+                            } catch (_) {}
+
+                            final jam =
+                                (item["jam_masuk"] ?? "").toString().length >= 5
+                                    ? item["jam_masuk"].toString().substring(0, 5)
+                                    : "-";
+                            final status = item["status"] ?? "-";
+                            final isHadir =
+                                status.toLowerCase() == "hadir";
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isHadir
+                                      ? const Color(0xff1E5631).withOpacity(0.2)
+                                      : Colors.orange.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: isHadir
+                                          ? const Color(0xff1E5631)
+                                          : Colors.orange,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tanggal,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          status,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isHadir
+                                                ? const Color(0xff1E5631)
+                                                : Colors.orange,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    jam,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _miniStat(String label, int value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            "$value",
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniDivider() {
+    return Container(
+      width: 1,
+      height: 30,
+      color: Colors.white24,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+    );
+  }
+}

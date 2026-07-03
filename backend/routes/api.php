@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AbsensiSettingController;
 use App\Http\Controllers\Api\FaceController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\GuruController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -46,6 +47,12 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/attendance/riwayat', [AttendanceController::class, 'riwayat']);
 
      Route::post('/update-photo', [AuthController::class, 'updatePhoto']);
+
+       // Route khusus guru
+    Route::get('/guru/kelas',                    [GuruController::class, 'kelasSaya']);
+    Route::get('/guru/kehadiran-hari-ini',       [GuruController::class, 'kehadiranHariIni']);
+    Route::get('/guru/riwayat-siswa/{siswaId}',  [GuruController::class, 'riwayatSiswa']);
+    Route::get('/guru/kehadiran-per-tanggal', [GuruController::class, 'kehadiranPerTanggal']);
 
 });
 

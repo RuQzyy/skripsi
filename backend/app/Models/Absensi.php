@@ -20,6 +20,17 @@ class Absensi extends Model
         'tanggal' => 'date',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($absensi) {
+            if ($absensi->status) {
+                $absensi->status = ucfirst(strtolower($absensi->status));
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
