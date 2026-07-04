@@ -72,6 +72,25 @@ class _DashboardPageState extends State<DashboardPage> {
 
     print("6. Longitude : ${position.longitude}");
 
+    print("7. Is Mocked : ${position.isMocked}");
+
+    if (position.isMocked) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Lokasi palsu (fake GPS) terdeteksi. Absensi tidak dapat dilakukan.",
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        canAttendance = false;
+      });
+      return;
+    }
+
     setState(() {
       userLatitude = position.latitude;
 
@@ -1005,7 +1024,13 @@ Widget _absensiView(
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(statusText, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            statusText,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _statusColor(statusText),
+            ),
+          ),
           Text(jamText, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
@@ -1111,7 +1136,14 @@ Widget _riwayatView(List<dynamic> riwayatList, bool isLoading, BuildContext cont
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
       const SizedBox(height: 4),
-      Text(status, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+      Text(
+        status,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: _statusColor(status),
+        ),
+      ),
 
       const SizedBox(height: 18),
 
@@ -1187,6 +1219,19 @@ Widget _dot() {
       shape: BoxShape.circle,
     ),
   );
+}
+
+Color _statusColor(String status) {
+  switch (status.toLowerCase().trim()) {
+    case "hadir":
+      return const Color(0xff1E5631); // hijau
+    case "terlambat":
+      return Colors.orange;
+    case "alpha":
+      return Colors.red.shade400;
+    default:
+      return Colors.black54; // belum absen / status lain
+  }
 }
 
 Widget _dashedLine() {
@@ -1331,39 +1376,42 @@ class _RiwayatSheetState extends State<_RiwayatSheet> {
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: ["Semua", "Hadir", "Terlambat"].map((status) {
-              final isActive = filterStatus == status;
-              return GestureDetector(
-                onTap: () => setState(() => filterStatus = status),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? const Color(0xff1E5631)
-                        : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ["Semua", "Hadir", "Terlambat", "Alpha"].map((status) {
+                final isActive = filterStatus == status;
+                return GestureDetector(
+                  onTap: () => setState(() => filterStatus = status),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
                       color: isActive
                           ? const Color(0xff1E5631)
-                          : Colors.grey.shade300,
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xff1E5631)
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isActive ? Colors.white : Colors.black87,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isActive ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -1492,7 +1540,7 @@ class _RiwayatSheetState extends State<_RiwayatSheet> {
                               ? item["jam_masuk"].toString().substring(0, 5)
                               : "-";
                       final String status = item["status"] ?? "-";
-                      final bool isHadir = status == "Hadir";
+                      final Color statusColor = _statusColor(status);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -1501,9 +1549,7 @@ class _RiwayatSheetState extends State<_RiwayatSheet> {
                           color: const Color(0xffF7F7F7),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isHadir
-                                ? const Color(0xff1E5631).withOpacity(0.2)
-                                : Colors.orange.withOpacity(0.2),
+                            color: statusColor.withOpacity(0.2),
                           ),
                         ),
                         child: Row(
@@ -1513,8 +1559,7 @@ class _RiwayatSheetState extends State<_RiwayatSheet> {
                               width: 4,
                               height: 44,
                               decoration: BoxDecoration(
-                                color:
-                                    isHadir ? const Color(0xff1E5631) : Colors.orange,
+                                color: statusColor,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1526,9 +1571,7 @@ class _RiwayatSheetState extends State<_RiwayatSheet> {
                                   Text(
                                     status,
                                     style: TextStyle(
-                                      color: isHadir
-                                          ? const Color(0xff1E5631)
-                                          : Colors.orange,
+                                      color: statusColor,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),

@@ -17,7 +17,7 @@ class Absensi extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
+        'tanggal' => 'date:Y-m-d',
     ];
 
     protected static function boot()

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../services/attendance_service.dart';
 
@@ -133,7 +134,43 @@ class _AttendancePageState extends State<AttendancePage>
       verifying = true;
     });
 
-    final response = await attendanceService.attendance(image!);
+    // Ambil lokasi terbaru sebelum kirim absensi
+    Position position;
+    try {
+      position = await Geolocator.getCurrentPosition();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        verifying = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Gagal mengambil lokasi. Pastikan GPS aktif."),
+        ),
+      );
+      return;
+    }
+
+    if (position.isMocked) {
+      if (!mounted) return;
+      setState(() {
+        verifying = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Lokasi palsu (fake GPS) terdeteksi. Absensi ditolak."),
+        ),
+      );
+      return;
+    }
+
+    final response = await attendanceService.attendance(
+      image!,
+      position.latitude,
+      position.longitude,
+    );
 
     if (!mounted) return;
 

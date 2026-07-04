@@ -85,7 +85,11 @@ class AttendanceService {
   // ==========================
   // Kirim Absensi
   // ==========================
-  Future<Map<String, dynamic>> attendance(File image) async {
+  Future<Map<String, dynamic>> attendance(
+    File image,
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
@@ -100,6 +104,9 @@ class AttendanceService {
         "Accept": "application/json",
         "Authorization": "Bearer $token",
       });
+
+      request.fields["latitude"] = latitude.toString();
+      request.fields["longitude"] = longitude.toString();
 
       request.files.add(
         await http.MultipartFile.fromPath(

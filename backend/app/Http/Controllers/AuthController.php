@@ -83,26 +83,6 @@ class AuthController extends Controller
 
     }
 
-    public function connectGoogle(Request $request)
-    {
-
-        $request->validate([
-            'google_id' => 'required',
-            'email' => 'required|email'
-        ]);
-
-        $user = $request->user();
-
-        $user->google_id = $request->google_id;
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Akun Google berhasil dihubungkan'
-        ]);
-
-    }
-
 
     // logout
 

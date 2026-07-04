@@ -59,7 +59,7 @@ class AttendanceController extends Controller
             ], 500);
         }
 
-       $now = now()->format('H:i:s');
+      $now = now()->format('H:i:s');
 
         if ($now < $setting->jam_absen_mulai) {
             return response()->json([
@@ -72,6 +72,29 @@ class AttendanceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Jam absensi sudah berakhir.'
+            ], 400);
+        }
+
+        // ==========================
+        // Validasi lokasi (radius)
+        // ==========================
+
+        $request->validate([
+            'latitude'  => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        $distance = self::calculateDistance(
+            $request->latitude,
+            $request->longitude,
+            $setting->latitude,
+            $setting->longitude
+        );
+
+        if ($distance > $setting->radius) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda berada di luar area absensi. Jarak: ' . round($distance) . ' meter.'
             ], 400);
         }
 
@@ -122,17 +145,19 @@ class AttendanceController extends Controller
         // Simpan absensi
         // ==========================
 
-       $status = "Hadir";
+      $status = "hadir";
 
         if ($now > $setting->jam_terlambat) {
-            $status = "Terlambat";
+            $status = "terlambat";
         }
 
         $absensi = Absensi::create([
-            'user_id' => $user->id,
-            'tanggal' => $today,
+            'user_id'   => $user->id,
+            'tanggal'   => $today,
             'jam_masuk' => now()->format('H:i:s'),
-            'status' => $status,
+            'status'    => $status,
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
         return response()->json([
@@ -173,5 +198,21 @@ class AttendanceController extends Controller
             'success' => true,
             'data' => $riwayat,
         ]);
+    }
+
+    private static function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // meter
+
+        $latDiff = deg2rad($lat2 - $lat1);
+        $lonDiff = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDiff / 2) * sin($latDiff / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($lonDiff / 2) * sin($lonDiff / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 }
