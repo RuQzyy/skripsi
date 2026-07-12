@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/guru_service.dart';
 import 'guru_riwayat_siswa_page.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class GuruRiwayatKelasPage extends StatefulWidget {
   const GuruRiwayatKelasPage({super.key});
@@ -20,6 +23,8 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
 
   // Filter status di dalam detail tanggal
   String filterStatus = "Semua";
+  bool isDownloading = false;
+  
 
   @override
   void initState() {
@@ -58,6 +63,132 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
             (s["status"] ?? "").toString().trim().toLowerCase() ==
             filterStatus.trim().toLowerCase())
         .toList();
+  }
+
+  Future<void> _pilihDanUnduhLaporan() async {
+    DateTime bulanAwal = DateTime(DateTime.now().year, DateTime.now().month);
+    DateTime bulanAkhir = DateTime(DateTime.now().year, DateTime.now().month);
+
+    final result = await showDialog<Map<String, DateTime>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text("Unduh Rekap Absensi"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Dari Bulan",
+                      style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  _bulanDropdown(
+                    value: bulanAwal,
+                    onChanged: (v) => setDialogState(() => bulanAwal = v),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Sampai Bulan",
+                      style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  _bulanDropdown(
+                    value: bulanAkhir,
+                    onChanged: (v) => setDialogState(() => bulanAkhir = v),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Batal"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (bulanAkhir.isBefore(bulanAwal)) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              "Bulan akhir tidak boleh sebelum bulan awal"),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx, {"awal": bulanAwal, "akhir": bulanAkhir});
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff1E5631)),
+                  child:
+                      const Text("Unduh", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    setState(() => isDownloading = true);
+
+    final bulanAwalStr = DateFormat("yyyy-MM").format(result["awal"]!);
+    final bulanAkhirStr = DateFormat("yyyy-MM").format(result["akhir"]!);
+
+    final res = await GuruService.downloadLaporanAbsensi(
+      bulanAwal: bulanAwalStr,
+      bulanAkhir: bulanAkhirStr,
+    );
+
+    if (!mounted) return;
+    setState(() => isDownloading = false);
+
+    if (res["success"] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Laporan berhasil diunduh")),
+      );
+      OpenFilex.open(res["path"]);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res["message"] ?? "Gagal mengunduh laporan")),
+      );
+    }
+  }
+
+  Widget _bulanDropdown({
+    required DateTime value,
+    required ValueChanged<DateTime> onChanged,
+  }) {
+    final now = DateTime.now();
+    final List<DateTime> options = List.generate(24, (i) {
+      final d = DateTime(now.year, now.month - i);
+      return DateTime(d.year, d.month);
+    });
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<DateTime>(
+          value: options.firstWhere(
+            (o) => o.year == value.year && o.month == value.month,
+            orElse: () => options.first,
+          ),
+          isExpanded: true,
+          items: options.map((d) {
+            return DropdownMenuItem(
+              value: d,
+              child: Text(DateFormat("MMMM yyyy", "id_ID").format(d)),
+            );
+          }).toList(),
+          onChanged: (d) {
+            if (d != null) onChanged(d);
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -106,6 +237,24 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                       ],
                     ),
                   ),
+                  isDownloading
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.download_rounded,
+                              color: Colors.white),
+                          tooltip: "Unduh Rekap Absensi",
+                          onPressed: _pilihDanUnduhLaporan,
+                        ),
                 ],
               ),
             ),
@@ -118,8 +267,8 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children:
-                      ["Semua", "Hadir", "Terlambat", "Belum Absen"].map((s) {
+                  children: ["Semua", "Hadir", "Terlambat", "Alpha", "Belum Absen"]
+                      .map((s) {
                     final isActive = filterStatus == s;
                     return GestureDetector(
                       onTap: () => setState(() => filterStatus = s),
@@ -257,23 +406,31 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                             ),
                                             const SizedBox(height: 10),
                                             // Mini statistik
-                                            Row(
-                                              children: [
-                                                _miniChip(
-                                                  "Hadir ${statistik["hadir"] ?? 0}",
-                                                  const Color(0xff1E5631),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                _miniChip(
-                                                  "Terlambat ${statistik["terlambat"] ?? 0}",
-                                                  Colors.orange,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                _miniChip(
-                                                  "Belum ${statistik["belum_absen"] ?? 0}",
-                                                  Colors.red.shade400,
-                                                ),
-                                              ],
+                                            SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: Row(
+                                                children: [
+                                                  _miniChip(
+                                                    "Hadir ${statistik["hadir"] ?? 0}",
+                                                    const Color(0xff1E5631),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  _miniChip(
+                                                    "Terlambat ${statistik["terlambat"] ?? 0}",
+                                                    Colors.orange,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  _miniChip(
+                                                    "Alpha ${statistik["alpha"] ?? 0}",
+                                                    Colors.red.shade900,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  _miniChip(
+                                                    "Belum ${statistik["belum_absen"] ?? 0}",
+                                                    Colors.red.shade400,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -311,6 +468,8 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                           final isTerlambat =
                                               status.toLowerCase() ==
                                                   "terlambat";
+                                          final isAlpha =
+                                              status.toLowerCase() == "alpha";
 
                                           Color statusColor;
                                           if (isHadir) {
@@ -318,6 +477,8 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                                 const Color(0xff1E5631);
                                           } else if (isTerlambat) {
                                             statusColor = Colors.orange;
+                                          } else if (isAlpha) {
+                                            statusColor = Colors.red.shade900;
                                           } else {
                                             statusColor = Colors.red.shade400;
                                           }

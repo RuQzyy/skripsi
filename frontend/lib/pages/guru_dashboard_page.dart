@@ -233,7 +233,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       children: [
-                        _statCard(
+                       _statCard(
                           "Hadir",
                           statistik?["hadir"] ?? 0,
                           const Color(0xff1E5631),
@@ -245,6 +245,13 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                           statistik?["terlambat"] ?? 0,
                           Colors.orange,
                           Icons.access_time,
+                        ),
+                        const SizedBox(width: 10),
+                        _statCard(
+                          "Alpha",
+                          statistik?["alpha"] ?? 0,
+                          Colors.red.shade900,
+                          Icons.remove_circle,
                         ),
                         const SizedBox(width: 10),
                         _statCard(
@@ -280,6 +287,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                               "Semua",
                               "Hadir",
                               "Terlambat",
+                              "Alpha",
                               "Belum Absen"
                             ].map((s) {
                               final isActive = filterStatus == s;
@@ -413,6 +421,10 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
       case "terlambat":
         statusColor = Colors.orange;
         statusIcon = Icons.access_time;
+        break;
+      case "alpha":
+        statusColor = Colors.red.shade900;
+        statusIcon = Icons.remove_circle;
         break;
       default:
         statusColor = Colors.red.shade400;

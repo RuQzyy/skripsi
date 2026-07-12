@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/guru/kehadiran-hari-ini',       [GuruController::class, 'kehadiranHariIni']);
     Route::get('/guru/riwayat-siswa/{siswaId}',  [GuruController::class, 'riwayatSiswa']);
     Route::get('/guru/kehadiran-per-tanggal', [GuruController::class, 'kehadiranPerTanggal']);
+    Route::get('/guru/laporan-absensi', [GuruController::class, 'laporanAbsensi']);
 
 });
 

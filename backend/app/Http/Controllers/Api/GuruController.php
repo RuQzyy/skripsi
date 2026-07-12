@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Absensi;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
+use App\Exports\AbsensiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GuruController extends Controller
 {
@@ -74,8 +76,9 @@ class GuruController extends Controller
             ];
         });
 
-        $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
+       $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
         $terlambat = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'terlambat')->count();
+        $alpha     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'alpha')->count();
         $belum     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'belum absen')->count();
 
         return response()->json([
@@ -86,6 +89,7 @@ class GuruController extends Controller
                 'statistik'  => [
                     'hadir'      => $hadir,
                     'terlambat'  => $terlambat,
+                    'alpha'      => $alpha,
                     'belum_absen' => $belum,
                     'total'      => $siswaList->count(),
                 ],
@@ -133,6 +137,7 @@ class GuruController extends Controller
 
         $hadir     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'hadir')->count();
         $terlambat = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'terlambat')->count();
+        $alpha     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'alpha')->count();
 
         return response()->json([
             'success' => true,
@@ -146,6 +151,7 @@ class GuruController extends Controller
                 'statistik' => [
                     'hadir'     => $hadir,
                     'terlambat' => $terlambat,
+                    'alpha'     => $alpha,
                     'total'     => $riwayat->count(),
                 ],
                 'riwayat' => $riwayat->values(),
@@ -199,6 +205,7 @@ class GuruController extends Controller
 
         $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
         $terlambat = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'terlambat')->count();
+        $alpha     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'alpha')->count();
         $belum     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'belum absen')->count();
 
         return [
@@ -206,6 +213,7 @@ class GuruController extends Controller
             'statistik' => [
                 'hadir'       => $hadir,
                 'terlambat'   => $terlambat,
+                'alpha'       => $alpha,
                 'belum_absen' => $belum,
                 'total'       => $siswaList->count(),
             ],
@@ -219,4 +227,38 @@ class GuruController extends Controller
         'data'       => $result->values(),
     ]);
 }
+
+    // ==========================
+    // Download rekap absensi (Excel)
+    // ==========================
+    public function laporanAbsensi(Request $request)
+    {
+        $request->validate([
+            'bulan_awal'  => 'required|date_format:Y-m',
+            'bulan_akhir' => 'required|date_format:Y-m',
+        ]);
+
+        $guru = $request->user();
+
+        $kelas = Kelas::with('siswa')
+            ->where('wali_kelas_id', $guru->id)
+            ->first();
+
+        if (!$kelas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum menjadi wali kelas.',
+            ], 404);
+        }
+
+        $siswaIds = $kelas->siswa->pluck('id');
+
+        $fileName = 'Rekap-Absensi-' . str_replace(' ', '_', $kelas->nama_kelas)
+            . '-' . $request->bulan_awal . '_sd_' . $request->bulan_akhir . '.xlsx';
+
+        return Excel::download(
+            new AbsensiExport($siswaIds, $request->bulan_awal, $request->bulan_akhir, $kelas->nama_kelas),
+            $fileName
+        );
+    }
 }

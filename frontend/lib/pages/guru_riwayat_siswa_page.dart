@@ -116,6 +116,10 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                               (statistik["terlambat"] ?? 0) as int,
                               const Color(0xffF4D03F)),
                           _miniDivider(),
+                          _miniStat("Alpha",
+                              (statistik["alpha"] ?? 0) as int,
+                              Colors.red.shade200),
+                          _miniDivider(),
                           _miniStat("Total",
                               (statistik["total"] ?? 0) as int, Colors.white70),
                         ],
@@ -134,7 +138,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ["Semua", "Hadir", "Terlambat"].map((s) {
+                  children: ["Semua", "Hadir", "Terlambat", "Alpha"].map((s) {
                     final isActive = filterStatus == s;
                     return GestureDetector(
                       onTap: () => setState(() => filterStatus = s),
@@ -213,6 +217,17 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                             final status = item["status"] ?? "-";
                             final isHadir =
                                 status.toLowerCase() == "hadir";
+                            final isAlpha =
+                                status.toLowerCase() == "alpha";
+
+                            Color itemColor;
+                            if (isHadir) {
+                              itemColor = const Color(0xff1E5631);
+                            } else if (isAlpha) {
+                              itemColor = Colors.red.shade900;
+                            } else {
+                              itemColor = Colors.orange;
+                            }
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),
@@ -221,9 +236,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isHadir
-                                      ? const Color(0xff1E5631).withOpacity(0.2)
-                                      : Colors.orange.withOpacity(0.2),
+                                  color: itemColor.withOpacity(0.2),
                                 ),
                               ),
                               child: Row(
@@ -232,9 +245,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                     width: 4,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: isHadir
-                                          ? const Color(0xff1E5631)
-                                          : Colors.orange,
+                                      color: itemColor,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -255,9 +266,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                           status,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: isHadir
-                                                ? const Color(0xff1E5631)
-                                                : Colors.orange,
+                                            color: itemColor,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
