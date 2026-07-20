@@ -37,7 +37,7 @@
                     </p>
 
                     <h2 class="text-3xl font-bold text-gray-800 mt-2">
-                        325
+                        {{ $totalSiswa }}
                     </h2>
 
                 </div>
@@ -68,7 +68,7 @@
                     </p>
 
                     <h2 class="text-3xl font-bold text-gray-800 mt-2">
-                        35
+                        {{ $totalGuru }}
                     </h2>
 
                 </div>
@@ -99,7 +99,7 @@
                     </p>
 
                     <h2 class="text-3xl font-bold text-gray-800 mt-2">
-                        12
+                        {{ $totalKelas }}
                     </h2>
 
                 </div>
@@ -130,7 +130,7 @@
                     </p>
 
                     <h2 class="text-3xl font-bold text-gray-800 mt-2">
-                        95%
+                        {{ $persenKehadiranHariIni }}%
                     </h2>
 
                 </div>
@@ -263,11 +263,11 @@
 
                     <div class="flex justify-between text-sm mb-1">
                         <span>Hadir</span>
-                        <span>95%</span>
+                        <span>{{ $ringkasan['hadir'] }}%</span>
                     </div>
 
                     <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-green-500 h-3 rounded-full w-[95%]"></div>
+                        <div class="bg-green-500 h-3 rounded-full" style="width: {{ $ringkasan['hadir'] }}%"></div>
                     </div>
 
                 </div>
@@ -276,11 +276,24 @@
 
                     <div class="flex justify-between text-sm mb-1">
                         <span>Izin</span>
-                        <span>3%</span>
+                        <span>{{ $ringkasan['izin'] }}%</span>
                     </div>
 
                     <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-yellow-500 h-3 rounded-full w-[3%]"></div>
+                        <div class="bg-yellow-500 h-3 rounded-full" style="width: {{ $ringkasan['izin'] }}%"></div>
+                    </div>
+
+                </div>
+
+                <div>
+
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Sakit</span>
+                        <span>{{ $ringkasan['sakit'] }}%</span>
+                    </div>
+
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-purple-500 h-3 rounded-full" style="width: {{ $ringkasan['sakit'] }}%"></div>
                     </div>
 
                 </div>
@@ -289,11 +302,11 @@
 
                     <div class="flex justify-between text-sm mb-1">
                         <span>Alpha</span>
-                        <span>2%</span>
+                        <span>{{ $ringkasan['alpha'] }}%</span>
                     </div>
 
                     <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-red-500 h-3 rounded-full w-[2%]"></div>
+                        <div class="bg-red-500 h-3 rounded-full" style="width: {{ $ringkasan['alpha'] }}%"></div>
                     </div>
 
                 </div>
@@ -333,7 +346,6 @@
     </div>
 
 </div>
-
 <script>
 
 const ctx = document.getElementById('attendanceChart');
@@ -344,26 +356,19 @@ new Chart(ctx, {
 
     data: {
 
-        labels: [
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'Mei',
-            'Jun'
-        ],
+        labels: @json($bulanLabels),
 
         datasets: [
 
             {
-                label: 'Hadir',
-                data: [95, 92, 96, 94, 97, 95],
+                label: 'Hadir (%)',
+                data: @json($dataHadir),
                 backgroundColor: '#16a34a'
             },
 
             {
-                label: 'Tidak Hadir',
-                data: [5, 8, 4, 6, 3, 5],
+                label: 'Tidak Hadir (%)',
+                data: @json($dataTidakHadir),
                 backgroundColor: '#ef4444'
             }
 
@@ -373,6 +378,18 @@ new Chart(ctx, {
     options: {
 
         responsive: true,
+
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        },
 
         plugins: {
             legend: {

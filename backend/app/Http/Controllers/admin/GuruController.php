@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Imports\GuruImport;
+use App\Exports\GuruTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -164,5 +167,39 @@ class GuruController extends Controller
         );
     }
 
+    // ==========================
+    // Import Excel Guru
+    // ==========================
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv',
+        ]);
+
+        $import = new GuruImport();
+        Excel::import($import, $request->file('file'));
+
+        if ($import->failures()->isNotEmpty()) {
+            $pesanGagal = $import->failures()->map(function ($failure) {
+                return 'Baris ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            })->implode(' | ');
+
+            return redirect()
+                ->route('admin.guru.index')
+                ->with('error', 'Sebagian data gagal diimport: ' . $pesanGagal);
+        }
+
+        return redirect()
+            ->route('admin.guru.index')
+            ->with('success', 'Data guru berhasil diimport.');
+    }
+
+    // ==========================
+    // Download Template Excel Guru
+    // ==========================
+    public function downloadTemplate()
+    {
+        return Excel::download(new GuruTemplateExport(), 'Template-Import-Guru.xlsx');
+    }
 
 }

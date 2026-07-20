@@ -212,7 +212,7 @@
                 </a>
 
                 {{-- LAPORAN --}}
-                <a href="#"
+                <a href="{{ route('admin.laporan.index') }}"
                     class="group relative flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10">
 
                     <i data-feather="file-text"></i>

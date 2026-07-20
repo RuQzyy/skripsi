@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\AbsensiSettingController;
+use App\Http\Controllers\Admin\LaporanAbsensiController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -51,6 +52,14 @@ Route::middleware(['auth', 'admin'])
             [SiswaController::class, 'downloadTemplate'])
             ->name('siswa.template');
 
+        // ================= IMPORT GURU =================
+        Route::post('/guru/import', [GuruController::class, 'import'])
+            ->name('guru.import');
+
+        Route::get('/guru/template/download',
+            [GuruController::class, 'downloadTemplate'])
+            ->name('guru.template');
+
             Route::get(
             '/pengaturan-absensi',
             [AbsensiSettingController::class, 'index']
@@ -65,6 +74,16 @@ Route::middleware(['auth', 'admin'])
             '/siswa/{id}/reset-face',
             [SiswaController::class, 'resetFaceId']
         )->name('siswa.resetFace');
+
+        // ================= LAPORAN KEHADIRAN =================
+        Route::get('/laporan-absensi', [LaporanAbsensiController::class, 'index'])
+            ->name('laporan.index');
+
+        Route::get('/laporan-absensi/kelas/{kelasId}/download', [LaporanAbsensiController::class, 'downloadKelas'])
+            ->name('laporan.downloadKelas');
+
+        Route::get('/laporan-absensi/download-semua', [LaporanAbsensiController::class, 'downloadSemua'])
+            ->name('laporan.downloadSemua');
 
     });
 

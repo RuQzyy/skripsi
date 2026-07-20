@@ -24,15 +24,31 @@
 
         </div>
 
-        <button
-            onclick="openTambahModal()"
-            class="bg-primary hover:bg-secondary text-white px-5 py-3 rounded-xl flex items-center gap-2">
+        <div class="flex gap-3">
 
-            <iconify-icon icon="solar:add-circle-bold"></iconify-icon>
+            {{-- IMPORT EXCEL --}}
+            <button
+                onclick="openImportModal()"
+                class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl flex items-center gap-2">
 
-            Tambah Guru
+                <iconify-icon icon="solar:upload-bold"></iconify-icon>
 
-        </button>
+                Import Excel
+
+            </button>
+
+            {{-- TAMBAH --}}
+            <button
+                onclick="openTambahModal()"
+                class="bg-primary hover:bg-secondary text-white px-5 py-3 rounded-xl flex items-center gap-2">
+
+                <iconify-icon icon="solar:add-circle-bold"></iconify-icon>
+
+                Tambah Guru
+
+            </button>
+
+        </div>
 
     </div>
 
@@ -73,6 +89,29 @@
         </form>
 
     </div>
+
+    {{-- SUCCESS / ERROR --}}
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: '{{ session('success') }}',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: '{{ session('error') }}',
+            });
+        </script>
+    @endif
 
     {{-- TABLE --}}
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -518,6 +557,86 @@
 
         </form>
 
+   </div>
+</div>
+
+{{-- MODAL IMPORT --}}
+<div id="importModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+
+    <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="flex justify-between items-center p-5 border-b">
+
+            <h2 class="font-bold text-lg">
+                Import Excel Guru
+            </h2>
+
+            <button type="button" onclick="closeImportModal()">
+                <iconify-icon icon="solar:close-circle-bold" width="28"></iconify-icon>
+            </button>
+
+        </div>
+
+        {{-- FORM --}}
+        <form action="{{ route('admin.guru.import') }}" method="POST" enctype="multipart/form-data">
+
+            @csrf
+
+            <div class="p-5 space-y-4">
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+
+                    <p class="font-semibold">
+                        Format kolom:
+                    </p>
+
+                    <p class="text-sm mt-2">
+                        name | nip | email | phone | password
+                    </p>
+
+                    <a href="{{ route('admin.guru.template') }}"
+                        class="inline-flex items-center gap-2 mt-4 bg-green-600 text-white px-4 py-2 rounded-xl">
+
+                        <iconify-icon icon="solar:download-bold"></iconify-icon>
+
+                        Download Template
+
+                    </a>
+
+                </div>
+
+                <div>
+
+                    <label class="block mb-2 text-sm font-medium">
+                        Pilih File Excel
+                    </label>
+
+                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required
+                        class="w-full border rounded-xl p-3">
+
+                </div>
+
+            </div>
+
+            <div class="p-5 border-t flex justify-end gap-3">
+
+                <button type="button" onclick="closeImportModal()" class="px-5 py-2 border rounded-xl">
+
+                    Batal
+
+                </button>
+
+                <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-xl">
+
+                    Import
+
+                </button>
+
+            </div>
+
+        </form>
+
     </div>
 
 </div>
@@ -616,7 +735,7 @@
 
     // ================= DELETE =================
 
-    function confirmDelete(id) {
+   function confirmDelete(id) {
 
         Swal.fire({
             title: 'Hapus Guru?',
@@ -638,6 +757,25 @@
             }
 
         });
+
+    }
+
+    // ================= IMPORT =================
+
+    function openImportModal() {
+
+        document.getElementById('importModal')
+            .classList.remove('hidden');
+
+        document.getElementById('importModal')
+            .classList.add('flex');
+
+    }
+
+    function closeImportModal() {
+
+        document.getElementById('importModal')
+            .classList.add('hidden');
 
     }
 
