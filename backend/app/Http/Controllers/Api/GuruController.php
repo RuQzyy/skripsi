@@ -63,7 +63,7 @@ class GuruController extends Controller
 
         $today = now()->toDateString();
 
-        $siswaList = $kelas->siswa->map(function ($siswa) use ($today) {
+      $siswaList = $kelas->siswa->map(function ($siswa) use ($today) {
             $absensi = $siswa->absensis->first();
 
             return [
@@ -73,13 +73,16 @@ class GuruController extends Controller
                 'photo'    => $siswa->photo,
                 'status'   => $absensi ? $absensi->status : 'Belum Absen',
                 'jam_masuk' => $absensi ? $absensi->jam_masuk : null,
+                'catatan'  => $absensi ? $absensi->catatan : null,
             ];
         });
 
-       $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
-        $terlambat = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'terlambat')->count();
-        $alpha     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'alpha')->count();
-        $belum     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'belum absen')->count();
+      $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
+    $terlambat = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'terlambat')->count();
+    $alpha     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'alpha')->count();
+    $izin      = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'izin')->count();
+    $sakit     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'sakit')->count();
+    $belum     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'belum absen')->count();
 
         return response()->json([
             'success' => true,
@@ -90,6 +93,8 @@ class GuruController extends Controller
                     'hadir'      => $hadir,
                     'terlambat'  => $terlambat,
                     'alpha'      => $alpha,
+                    'izin'       => $izin,
+                    'sakit'      => $sakit,
                     'belum_absen' => $belum,
                     'total'      => $siswaList->count(),
                 ],
@@ -129,15 +134,19 @@ class GuruController extends Controller
             ->get()
             ->map(function ($a) {
                 return [
+                    'id'        => $a->id,
                     'tanggal'   => $a->tanggal,
                     'jam_masuk' => $a->jam_masuk,
                     'status'    => $a->status,
+                    'catatan'   => $a->catatan,
                 ];
             });
 
-        $hadir     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'hadir')->count();
+       $hadir     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'hadir')->count();
         $terlambat = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'terlambat')->count();
         $alpha     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'alpha')->count();
+        $izin      = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'izin')->count();
+        $sakit     = $riwayat->filter(fn($r) => strtolower(trim($r['status'])) === 'sakit')->count();
 
         return response()->json([
             'success' => true,
@@ -152,6 +161,8 @@ class GuruController extends Controller
                     'hadir'     => $hadir,
                     'terlambat' => $terlambat,
                     'alpha'     => $alpha,
+                    'izin'      => $izin,
+                    'sakit'     => $sakit,
                     'total'     => $riwayat->count(),
                 ],
                 'riwayat' => $riwayat->values(),
@@ -193,19 +204,22 @@ class GuruController extends Controller
             ->whereRaw('DATE(tanggal) = ?', [$tanggal])
             ->first();
 
-        return [
+       return [
             'id'        => $siswa->id,
             'name'      => $siswa->name,
             'nisn'      => $siswa->nisn,
             'photo'     => $siswa->photo,
             'status'    => $absensi ? $absensi->status : 'Belum Absen',
             'jam_masuk' => $absensi ? $absensi->jam_masuk : null,
+            'catatan'   => $absensi ? $absensi->catatan : null,
         ];
     });
 
         $hadir     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'hadir')->count();
         $terlambat = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'terlambat')->count();
         $alpha     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'alpha')->count();
+        $izin      = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'izin')->count();
+        $sakit     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'sakit')->count();
         $belum     = $siswaList->filter(fn($s) => strtolower(trim($s['status'])) === 'belum absen')->count();
 
         return [
@@ -214,6 +228,8 @@ class GuruController extends Controller
                 'hadir'       => $hadir,
                 'terlambat'   => $terlambat,
                 'alpha'       => $alpha,
+                'izin'        => $izin,
+                'sakit'       => $sakit,
                 'belum_absen' => $belum,
                 'total'       => $siswaList->count(),
             ],
@@ -260,5 +276,51 @@ class GuruController extends Controller
             new AbsensiExport($siswaIds, $request->bulan_awal, $request->bulan_akhir, $kelas->nama_kelas),
             $fileName
         );
+    }
+
+    // ==========================
+    // Ubah status kehadiran siswa
+    // ==========================
+   public function updateStatusAbsensi(Request $request, $absensiId)
+    {
+        $request->validate([
+            'status'  => 'required|in:Hadir,Terlambat,Alpha,Izin,Sakit',
+            'catatan' => 'nullable|required_if:status,Izin|string|max:255',
+        ]);
+
+        $guru = $request->user();
+
+        $kelas = Kelas::with('siswa')->where('wali_kelas_id', $guru->id)->first();
+
+        if (!$kelas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum menjadi wali kelas.',
+            ], 404);
+        }
+
+        $siswaIds = $kelas->siswa->pluck('id');
+
+        $absensi = Absensi::where('id', $absensiId)
+            ->whereIn('user_id', $siswaIds)
+            ->first();
+
+        if (!$absensi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data absensi tidak ditemukan atau bukan milik siswa di kelas Anda.',
+            ], 404);
+        }
+
+        $absensi->status = $request->status;
+        // Kalau bukan Izin, catatan dikosongkan supaya tidak nyangkut dari status sebelumnya
+        $absensi->catatan = $request->status === 'Izin' ? $request->catatan : null;
+        $absensi->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status kehadiran berhasil diubah.',
+            'data' => $absensi,
+        ]);
     }
 }

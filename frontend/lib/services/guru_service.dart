@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 
 class GuruService {
-  static const String baseUrl = "http://192.168.1.14:8000/api";
+  static const String baseUrl = "http://192.168.1.12:8000/api";
 
   static Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();
@@ -79,6 +79,29 @@ class GuruService {
 
         return {"success": false, "message": message};
       }
+    } catch (e) {
+      return {"success": false, "message": "Terjadi kesalahan: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateStatusAbsensi({
+    required int absensiId,
+    required String status,
+    String? catatan,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/guru/absensi/$absensiId/status"),
+        headers: {
+          ...await _headers(),
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "status": status,
+          if (catatan != null) "catatan": catatan,
+        }),
+      );
+      return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Terjadi kesalahan: $e"};
     }

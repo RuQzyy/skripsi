@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/guru/riwayat-siswa/{siswaId}',  [GuruController::class, 'riwayatSiswa']);
     Route::get('/guru/kehadiran-per-tanggal', [GuruController::class, 'kehadiranPerTanggal']);
     Route::get('/guru/laporan-absensi', [GuruController::class, 'laporanAbsensi']);
+    Route::put('/guru/absensi/{id}/status', [GuruController::class, 'updateStatusAbsensi']);
 
 });
 

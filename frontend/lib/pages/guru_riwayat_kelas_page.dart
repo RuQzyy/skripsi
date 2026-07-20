@@ -36,7 +36,7 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
     if (siswa["photo"] == null || siswa["photo"].toString().isEmpty) {
       return "";
     }
-    return "http://192.168.1.14:8000/storage/siswa/${siswa["photo"]}";
+    return "http://192.168.1.12:8000/storage/siswa/${siswa["photo"]}";
   }
 
   Future<void> _loadData() async {
@@ -267,8 +267,15 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ["Semua", "Hadir", "Terlambat", "Alpha", "Belum Absen"]
-                      .map((s) {
+                  children: [
+                    "Semua",
+                    "Hadir",
+                    "Terlambat",
+                    "Izin",
+                    "Sakit",
+                    "Alpha",
+                    "Belum Absen"
+                  ].map((s) {
                     final isActive = filterStatus == s;
                     return GestureDetector(
                       onTap: () => setState(() => filterStatus = s),
@@ -421,6 +428,16 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                                   ),
                                                   const SizedBox(width: 6),
                                                   _miniChip(
+                                                    "Izin ${statistik["izin"] ?? 0}",
+                                                    Colors.blue.shade700,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  _miniChip(
+                                                    "Sakit ${statistik["sakit"] ?? 0}",
+                                                    Colors.purple.shade700,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  _miniChip(
                                                     "Alpha ${statistik["alpha"] ?? 0}",
                                                     Colors.red.shade900,
                                                   ),
@@ -463,24 +480,30 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                                   .toString()
                                                   .substring(0, 5)
                                               : "-";
-                                          final isHadir =
-                                              status.toLowerCase() == "hadir";
-                                          final isTerlambat =
-                                              status.toLowerCase() ==
-                                                  "terlambat";
-                                          final isAlpha =
-                                              status.toLowerCase() == "alpha";
-
                                           Color statusColor;
-                                          if (isHadir) {
-                                            statusColor =
-                                                const Color(0xff1E5631);
-                                          } else if (isTerlambat) {
-                                            statusColor = Colors.orange;
-                                          } else if (isAlpha) {
-                                            statusColor = Colors.red.shade900;
-                                          } else {
-                                            statusColor = Colors.red.shade400;
+                                          switch (status.toLowerCase()) {
+                                            case "hadir":
+                                              statusColor =
+                                                  const Color(0xff1E5631);
+                                              break;
+                                            case "terlambat":
+                                              statusColor = Colors.orange;
+                                              break;
+                                            case "izin":
+                                              statusColor =
+                                                  Colors.blue.shade700;
+                                              break;
+                                            case "sakit":
+                                              statusColor =
+                                                  Colors.purple.shade700;
+                                              break;
+                                            case "alpha":
+                                              statusColor =
+                                                  Colors.red.shade900;
+                                              break;
+                                            default:
+                                              statusColor =
+                                                  Colors.red.shade400;
                                           }
 
                                           return GestureDetector(
@@ -592,6 +615,25 @@ class _GuruRiwayatKelasPageState extends State<GuruRiwayatKelasPage> {
                                                             color:
                                                                 Colors.black45,
                                                           ),
+                                                        ),
+                                                      if (status.toLowerCase() ==
+                                                              "izin" &&
+                                                          (siswa["catatan"] ??
+                                                                  "")
+                                                              .toString()
+                                                              .isNotEmpty)
+                                                        Text(
+                                                          siswa["catatan"],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 10,
+                                                            color:
+                                                                Colors.black38,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
                                                         ),
                                                     ],
                                                   ),

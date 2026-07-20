@@ -49,6 +49,116 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
     }
   }
 
+  Future<void> _ubahStatus(Map<String, dynamic> item) async {
+    final currentStatus = (item["status"] ?? "").toString();
+    final absensiId = item["id"];
+
+    if (absensiId == null) return;
+
+    final statusOptions = ["Hadir", "Terlambat", "Izin", "Sakit", "Alpha"];
+    String? tempSelected = statusOptions.firstWhere(
+      (s) => s.toLowerCase() == currentStatus.toLowerCase(),
+      orElse: () => statusOptions.first,
+    );
+    final catatanController =
+        TextEditingController(text: item["catatan"] ?? "");
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text("Ubah Status Kehadiran"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...statusOptions.map((s) {
+                      return RadioListTile<String>(
+                        value: s,
+                        groupValue: tempSelected,
+                        title: Text(s),
+                        activeColor: const Color(0xff1E5631),
+                        onChanged: (v) =>
+                            setDialogState(() => tempSelected = v),
+                      );
+                    }),
+                    if (tempSelected == "Izin") ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: catatanController,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          labelText: "Catatan Izin",
+                          hintText: "Contoh: Acara keluarga",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Batal"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (tempSelected == "Izin" &&
+                        catatanController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                            content: Text("Catatan izin wajib diisi")),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx, {
+                      "status": tempSelected ?? currentStatus,
+                      "catatan": catatanController.text.trim(),
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff1E5631),
+                  ),
+                  child: const Text("Simpan"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    final selectedStatus = result["status"]!;
+    if (selectedStatus.toLowerCase() == currentStatus.toLowerCase() &&
+        (item["catatan"] ?? "") == result["catatan"]) {
+      return;
+    }
+
+    final res = await GuruService.updateStatusAbsensi(
+      absensiId: absensiId,
+      status: selectedStatus,
+      catatan: selectedStatus == "Izin" ? result["catatan"] : null,
+    );
+
+    if (!mounted) return;
+
+    if (res["success"] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Status berhasil diubah")),
+      );
+      _loadData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res["message"] ?? "Gagal mengubah status")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final statistik = data?["statistik"];
@@ -116,6 +226,14 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                               (statistik["terlambat"] ?? 0) as int,
                               const Color(0xffF4D03F)),
                           _miniDivider(),
+                          _miniStat("Izin",
+                              (statistik["izin"] ?? 0) as int,
+                              Colors.blue.shade200),
+                          _miniDivider(),
+                          _miniStat("Sakit",
+                              (statistik["sakit"] ?? 0) as int,
+                              Colors.purple.shade200),
+                          _miniDivider(),
                           _miniStat("Alpha",
                               (statistik["alpha"] ?? 0) as int,
                               Colors.red.shade200),
@@ -138,7 +256,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ["Semua", "Hadir", "Terlambat", "Alpha"].map((s) {
+                  children: ["Semua", "Hadir", "Terlambat", "Izin", "Sakit", "Alpha"].map((s) {
                     final isActive = filterStatus == s;
                     return GestureDetector(
                       onTap: () => setState(() => filterStatus = s),
@@ -215,21 +333,23 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                     ? item["jam_masuk"].toString().substring(0, 5)
                                     : "-";
                             final status = item["status"] ?? "-";
-                            final isHadir =
-                                status.toLowerCase() == "hadir";
-                            final isAlpha =
-                                status.toLowerCase() == "alpha";
 
                             Color itemColor;
-                            if (isHadir) {
+                            if (status.toLowerCase() == "hadir") {
                               itemColor = const Color(0xff1E5631);
-                            } else if (isAlpha) {
+                            } else if (status.toLowerCase() == "alpha") {
                               itemColor = Colors.red.shade900;
+                            } else if (status.toLowerCase() == "izin") {
+                              itemColor = Colors.blue.shade700;
+                            } else if (status.toLowerCase() == "sakit") {
+                              itemColor = Colors.purple.shade700;
                             } else {
                               itemColor = Colors.orange;
                             }
 
-                            return Container(
+                            return GestureDetector(
+                              onTap: () => _ubahStatus(item),
+                              child: Container(
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
@@ -270,10 +390,25 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
+                                        if (status.toLowerCase() == "izin" &&
+                                            (item["catatan"] ?? "")
+                                                .toString()
+                                                .isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            item["catatan"],
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.black54,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
-                                  Text(
+                                 Text(
                                     jam,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -281,6 +416,7 @@ class _GuruRiwayatSiswaPageState extends State<GuruRiwayatSiswaPage> {
                                     ),
                                   ),
                                 ],
+                              ),
                               ),
                             );
                           },

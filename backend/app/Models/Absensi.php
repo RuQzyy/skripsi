@@ -10,10 +10,10 @@ class Absensi extends Model
         'user_id',
         'tanggal',
         'jam_masuk',
+        'catatan', 
         'status',
         'latitude',
         'longitude',
-        'foto',
     ];
 
     protected $casts = [

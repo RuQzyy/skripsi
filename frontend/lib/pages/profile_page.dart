@@ -25,7 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     String role = user?["role"]?.toString() ?? "siswa";
 
-    return "http://192.168.1.14:8000/storage/$role/${user?["photo"]}";
+    return "http://192.168.1.12:8000/storage/$role/${user?["photo"]}";
   }
 
   final TextEditingController namaController = TextEditingController();

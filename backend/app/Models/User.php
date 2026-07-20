@@ -20,7 +20,6 @@ class User extends Authenticatable
         'nip',
         'phone',
         'photo',
-        'google_id',
         'face_id',
         'kelas_id',
         'role'

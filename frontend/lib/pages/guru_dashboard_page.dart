@@ -41,7 +41,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
     if (siswa["photo"] == null || siswa["photo"].toString().isEmpty) {
       return "";
     }
-    return "http://192.168.1.14:8000/storage/siswa/${siswa["photo"]}";
+    return "http://192.168.1.12:8000/storage/siswa/${siswa["photo"]}";
   }
 
   Future<void> _loadData() async {
@@ -231,36 +231,53 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                   // ===== STATISTIK =====
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                       _statCard(
-                          "Hadir",
-                          statistik?["hadir"] ?? 0,
-                          const Color(0xff1E5631),
-                          Icons.check_circle,
-                        ),
-                        const SizedBox(width: 10),
-                        _statCard(
-                          "Terlambat",
-                          statistik?["terlambat"] ?? 0,
-                          Colors.orange,
-                          Icons.access_time,
-                        ),
-                        const SizedBox(width: 10),
-                        _statCard(
-                          "Alpha",
-                          statistik?["alpha"] ?? 0,
-                          Colors.red.shade900,
-                          Icons.remove_circle,
-                        ),
-                        const SizedBox(width: 10),
-                        _statCard(
-                          "Belum",
-                          statistik?["belum_absen"] ?? 0,
-                          Colors.red.shade400,
-                          Icons.cancel,
-                        ),
-                      ],
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _statCard(
+                            "Hadir",
+                            statistik?["hadir"] ?? 0,
+                            const Color(0xff1E5631),
+                            Icons.check_circle,
+                          ),
+                          const SizedBox(width: 10),
+                          _statCard(
+                            "Terlambat",
+                            statistik?["terlambat"] ?? 0,
+                            Colors.orange,
+                            Icons.access_time,
+                          ),
+                          const SizedBox(width: 10),
+                          _statCard(
+                            "Izin",
+                            statistik?["izin"] ?? 0,
+                            Colors.blue.shade700,
+                            Icons.info,
+                          ),
+                          const SizedBox(width: 10),
+                          _statCard(
+                            "Sakit",
+                            statistik?["sakit"] ?? 0,
+                            Colors.purple.shade700,
+                            Icons.local_hospital,
+                          ),
+                          const SizedBox(width: 10),
+                          _statCard(
+                            "Alpha",
+                            statistik?["alpha"] ?? 0,
+                            Colors.red.shade900,
+                            Icons.remove_circle,
+                          ),
+                          const SizedBox(width: 10),
+                          _statCard(
+                            "Belum",
+                            statistik?["belum_absen"] ?? 0,
+                            Colors.red.shade400,
+                            Icons.cancel,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -287,6 +304,8 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                               "Semua",
                               "Hadir",
                               "Terlambat",
+                              "Izin",
+                              "Sakit",
                               "Alpha",
                               "Belum Absen"
                             ].map((s) {
@@ -369,7 +388,8 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
   }
 
   Widget _statCard(String label, int value, Color color, IconData icon) {
-    return Expanded(
+    return SizedBox(
+      width: 82,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -421,6 +441,14 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
       case "terlambat":
         statusColor = Colors.orange;
         statusIcon = Icons.access_time;
+        break;
+      case "izin":
+        statusColor = Colors.blue.shade700;
+        statusIcon = Icons.info;
+        break;
+      case "sakit":
+        statusColor = Colors.purple.shade700;
+        statusIcon = Icons.local_hospital;
         break;
       case "alpha":
         statusColor = Colors.red.shade900;
