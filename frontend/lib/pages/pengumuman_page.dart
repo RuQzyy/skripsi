@@ -4,6 +4,9 @@ import '../services/pengumuman_service.dart';
 import '../pages/detail_pengumuman_page.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/profile_page.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import '../utils/page_transition.dart';
+import '../pages/login_page.dart'; // sumber AppColors
 
 class PengumumanPage extends StatefulWidget {
   const PengumumanPage({super.key});
@@ -76,6 +79,35 @@ class _PengumumanPageState extends State<PengumumanPage> {
       return "Baru saja";
     }
   }
+  
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: Colors.white,
+          size: 22,
+        ),
+        if (!isActive) ...[
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -102,18 +134,26 @@ class _PengumumanPageState extends State<PengumumanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEDEDED),
+      backgroundColor: AppColors.lightest,
       body: SafeArea(
         child: Column(
           children: [
-            /// HEADER
+            /// ===================== HEADER =====================
             Container(
-              height: MediaQuery.of(context).size.width * 0.30,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(8, 16, 20, 24),
               decoration: const BoxDecoration(
-                color: Color(0xff1E5631),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.darkest,
+                    AppColors.mediumDark,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(60),
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
               child: Row(
@@ -131,7 +171,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -142,13 +182,14 @@ class _PengumumanPageState extends State<PengumumanPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xffF4D03F),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       "${pengumumanList.length}",
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
+                        color: AppColors.darkest,
                       ),
                     ),
                   ),
@@ -158,10 +199,14 @@ class _PengumumanPageState extends State<PengumumanPage> {
 
             const SizedBox(height: 20),
 
-            /// LIST PENGUMUMAN
+            /// ===================== LIST PENGUMUMAN =====================
             Expanded(
                 child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.mediumDark,
+                        ),
+                      )
                     : RefreshIndicator(
                         onRefresh: () async {
                           page = 1;
@@ -170,6 +215,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
 
                           await getPengumuman();
                         },
+                        color: AppColors.mediumDark,
                         child: ListView.builder(
                           controller: scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -185,7 +231,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: AppColors.darkest.withOpacity(0.06),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -220,12 +266,12 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                           errorBuilder: (context, error, stackTrace) {
                                             return Container(
                                               height: 180,
-                                              color: Colors.grey.shade300,
-                                              child: const Center(
+                                              color: AppColors.light.withOpacity(0.3),
+                                              child: Center(
                                                 child: Icon(
                                                   Icons.image_not_supported,
                                                   size: 50,
-                                                  color: Colors.grey,
+                                                  color: AppColors.medium,
                                                 ),
                                               ),
                                             );
@@ -246,7 +292,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xff1E5631),
+                                                color: AppColors.darkest,
                                               ),
                                             ),
 
@@ -254,10 +300,10 @@ class _PengumumanPageState extends State<PengumumanPage> {
 
                                             Row(
                                               children: [
-                                                const Icon(
+                                                Icon(
                                                   Icons.calendar_today,
                                                   size: 14,
-                                                  color: Colors.grey,
+                                                  color: AppColors.medium,
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Expanded(
@@ -266,7 +312,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                                     overflow: TextOverflow.ellipsis,
                                                     style: const TextStyle(
                                                       fontSize: 12,
-                                                      color: Colors.grey,
+                                                      color: Colors.black45,
                                                     ),
                                                   ),
                                                 ),
@@ -285,8 +331,8 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                                     vertical: 6,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: const Color(0xffF4D03F)
-                                                        .withOpacity(0.2),
+                                                    color: AppColors.mediumDark
+                                                        .withOpacity(0.12),
                                                     borderRadius:
                                                         BorderRadius.circular(20),
                                                   ),
@@ -296,7 +342,7 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                                     ),
                                                     style: const TextStyle(
                                                       fontSize: 12,
-                                                      color: Color(0xff1E5631),
+                                                      color: AppColors.darkest,
                                                       fontWeight: FontWeight.w600,
                                                     ),
                                                   ),
@@ -323,8 +369,8 @@ class _PengumumanPageState extends State<PengumumanPage> {
                                                   ),
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor:
-                                                        const Color(0xffF4D03F),
-                                                    foregroundColor: Colors.black,
+                                                        AppColors.mediumDark,
+                                                    foregroundColor: Colors.white,
                                                     elevation: 0,
                                                     shape: RoundedRectangleBorder(
                                                       borderRadius:
@@ -345,7 +391,9 @@ class _PengumumanPageState extends State<PengumumanPage> {
                               return const Padding(
                                 padding: EdgeInsets.all(20),
                                 child: Center(
-                                  child: CircularProgressIndicator(),
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.mediumDark,
+                                  ),
                                 ),
                               );
                             }
@@ -355,59 +403,35 @@ class _PengumumanPageState extends State<PengumumanPage> {
           ],
         ),
       ),
-      /// ================= BOTTOM NAV =================
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xff1E5631),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xffF4D03F),
-          unselectedItemColor: Colors.white70,
+           /// ================= BOTTOM NAV =================
+      bottomNavigationBar: CurvedNavigationBar(
+        index: 1, // PENGUMUMAN AKTIF
+        height: 60,
+        backgroundColor: Colors.transparent, // biar menyatu dengan body
+        color: AppColors.darkest, // warna bar
+        buttonBackgroundColor: AppColors.mediumDark, // warna tombol yang aktif (yang "nongol")
+        animationDuration: const Duration(milliseconds: 400),
+        animationCurve: Curves.easeInOut,
+                items: [
+          _navItem(icon: Icons.home, label: "Home", isActive: false),
+          _navItem(icon: Icons.campaign, label: "Pengumuman", isActive: true),
+          _navItem(icon: Icons.person, label: "Profile", isActive: false),
+        ],
+                onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              fadePageRoute(const DashboardPage()),
+            );
+          }
 
-          currentIndex: 1, // PROFILE AKTIF
-
-          onTap: (index) {
-
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DashboardPage(),
-                ),
-              );
-            }
-
-            if (index == 2) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfilePage(),
-                ),
-              );
-            }
-
-          },
-
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.campaign),
-              label: "Pengumuman",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profile",
-            ),
-          ],
-        ),
+          if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              fadePageRoute(const ProfilePage()),
+            );
+          }
+        },
       ),
     );
   }

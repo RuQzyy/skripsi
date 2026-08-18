@@ -18,7 +18,7 @@
         </h1>
 
         <p class="text-gray-500 mt-1">
-            Selamat datang di Smart Attendance System MAN Ambon
+            Selamat datang di Smart Attendance System SMA 15 Ambon
         </p>
     </div>
 

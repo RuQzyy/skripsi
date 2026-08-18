@@ -45,7 +45,7 @@ class _LoginSuccessPageState extends State<LoginSuccessPage> {
             width: double.infinity,
             height: double.infinity,
             child: Image.asset(
-              "assets/images/bg.jpg", 
+              "assets/images/bg.png", 
               fit: BoxFit.cover,
             ),
           ),
@@ -58,7 +58,7 @@ class _LoginSuccessPageState extends State<LoginSuccessPage> {
                 SizedBox(
                   height: 150,
                   child: Lottie.asset(
-                    "assets/lottie/animasi.json", 
+                    "assets/lottie/fix.json", 
                     repeat: true,
                   ),
                 ),
@@ -67,7 +67,7 @@ class _LoginSuccessPageState extends State<LoginSuccessPage> {
 
                 /// TEXT
                 const Text(
-                  "AbsenKITA",
+                  "SSIPRESMA 15",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,

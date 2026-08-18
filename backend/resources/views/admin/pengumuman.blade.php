@@ -19,7 +19,7 @@
                 </h1>
 
                 <p class="text-gray-500 text-sm">
-                    Kelola seluruh pengumuman aplikasi Smart Attendance MAN Ambon
+                    Kelola seluruh pengumuman aplikasi Smart Attendance SMA 15 Ambon
                 </p>
 
             </div>

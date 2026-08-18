@@ -8,6 +8,14 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
 
     <style>
+        :root{
+            --color-darkest:#0A1931;
+            --color-medium-dark:#1A3D63;
+            --color-medium:#4A7FA7;
+            --color-light:#B3CFE5;
+            --color-lightest:#F6FAFD;
+        }
+
         body{
             margin:0;
             padding:0;
@@ -16,8 +24,8 @@
             justify-content:center;
             align-items:center;
             background:linear-gradient(
-                rgba(22,101,52,.85),
-                rgba(22,101,52,.85)
+                rgba(10,25,49,.85),
+                rgba(26,61,99,.85)
             ),
             url("https://images.unsplash.com/photo-1509062522246-3755977927d7");
             background-size:cover;
@@ -33,15 +41,15 @@
             border-radius:20px;
             overflow:hidden;
             display:flex;
-            box-shadow:0 20px 40px rgba(0,0,0,.2);
+            box-shadow:0 20px 40px rgba(10,25,49,.25);
         }
 
         .left-side{
             width:45%;
             background:
                 linear-gradient(
-                    rgba(22,101,52,.8),
-                    rgba(22,101,52,.8)
+                    rgba(10,25,49,.85),
+                    rgba(26,61,99,.85)
                 ),
                 url("https://images.unsplash.com/photo-1523050854058-8df90110c9f1");
             background-size:cover;
@@ -85,7 +93,7 @@
 
         .login-form h2{
             font-size:38px;
-            color:#374151;
+            color:var(--color-darkest);
             margin-bottom:5px;
         }
 
@@ -111,10 +119,11 @@
             border:1px solid #d1d5db;
             border-radius:50px;
             outline:none;
+            transition:border-color .2s;
         }
 
         .input-group input:focus{
-            border-color:#166534;
+            border-color:var(--color-medium-dark);
         }
 
         .login-btn{
@@ -122,7 +131,11 @@
             border:none;
             padding:14px;
             border-radius:50px;
-            background:#16a34a;
+            background:linear-gradient(
+                135deg,
+                var(--color-darkest),
+                var(--color-medium-dark)
+            );
             color:white;
             font-size:16px;
             font-weight:600;
@@ -131,11 +144,11 @@
         }
 
         .login-btn:hover{
-            background:#15803d;
+            background:var(--color-darkest);
         }
 
         .error{
-            color:red;
+            color:#e53935;
             font-size:13px;
             margin-top:5px;
         }
@@ -164,7 +177,7 @@
     {{-- KIRI --}}
     <div class="left-side">
 
-        {{-- Ganti dengan logo MAN Ambon --}}
+        {{-- Ganti dengan logo SMA 15 Ambon --}}
         <img src="{{ asset('images/logo.png') }}" alt="Logo">
 
         <h1>Smart Attendance System</h1>
@@ -172,7 +185,7 @@
         <p>
             Sistem Absensi Berbasis Face Recognition
             <br>
-            MAN Ambon
+            SMA 15 Ambon
         </p>
 
     </div>

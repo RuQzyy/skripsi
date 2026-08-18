@@ -14,7 +14,7 @@
 
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Laporan Kehadiran</h1>
-            <p class="text-sm text-gray-500">Rekap kehadiran siswa seluruh kelas MAN Ambon</p>
+            <p class="text-sm text-gray-500">Rekap kehadiran siswa seluruh kelas SMA 15 Ambon</p>
         </div>
 
         @if($rekap)

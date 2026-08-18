@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/pengumuman_model.dart';
+import '../pages/login_page.dart'; // sumber AppColors
 
 class DetailPengumumanPage extends StatelessWidget {
   final Pengumuman pengumuman;
@@ -9,7 +10,7 @@ class DetailPengumumanPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEDEDED),
+      backgroundColor: AppColors.lightest,
 
       body: SafeArea(
         child: Column(
@@ -22,12 +23,15 @@ class DetailPengumumanPage extends StatelessWidget {
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xff1E5631),
-                    Color(0xff2E7D32),
+                    AppColors.darkest,
+                    AppColors.mediumDark,
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(60),
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
               child: Row(
@@ -46,7 +50,7 @@ class DetailPengumumanPage extends StatelessWidget {
                         "Detail Pengumuman",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -69,6 +73,13 @@ class DetailPengumumanPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.darkest.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: Column(
@@ -83,6 +94,19 @@ class DetailPengumumanPage extends StatelessWidget {
                           width: double.infinity,
                           height: 180,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 180,
+                              color: AppColors.light.withOpacity(0.3),
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                  color: AppColors.medium,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
 
@@ -94,6 +118,7 @@ class DetailPengumumanPage extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.darkest,
                         ),
                       ),
 
@@ -102,7 +127,11 @@ class DetailPengumumanPage extends StatelessWidget {
                       /// ================= TANGGAL =================
                       Row(
                         children: [
-                          const Icon(Icons.access_time,size: 16),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: AppColors.medium,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             pengumuman.tanggal ?? "",
@@ -121,6 +150,7 @@ class DetailPengumumanPage extends StatelessWidget {
                         pengumuman.deskripsi ?? "",
                         style: const TextStyle(
                           height: 1.5,
+                          color: Colors.black87,
                         ),
                       ),
 

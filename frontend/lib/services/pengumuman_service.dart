@@ -4,7 +4,7 @@ import '../models/pengumuman_model.dart';
 
 class PengumumanService {
 
-static const String baseUrl = "http://192.168.1.12:8000/api";
+static const String baseUrl = "http://192.168.1.48:8000/api";
   // static const String baseUrl = "http://10.170.1.37:8000/api";
 
   static Future<Map<String, dynamic>> getPengumuman({

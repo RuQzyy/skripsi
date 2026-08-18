@@ -11,58 +11,136 @@ use App\Services\WhatsappService;
 class MarkAlphaAbsensi extends Command
 {
     protected $signature = 'absensi:mark-alpha';
-    protected $description = 'Tandai siswa yang belum absen sebagai Alpha setelah jam absen selesai';
+
+    protected $description = 'Menandai Alpha dan Bolos secara otomatis';
 
     public function handle()
     {
         $setting = AbsensiSetting::first();
 
         if (!$setting || !$setting->is_active) {
-            return;
-        }
-
-        $now = now()->format('H:i:s');
-
-        if ($now < $setting->jam_absen_selesai) {
-            return;
+            $this->warn('Pengaturan absensi belum aktif.');
+            return Command::SUCCESS;
         }
 
         $today = now()->toDateString();
+        $now   = now()->format('H:i:s');
 
-        $siswaList = User::where('role', 'siswa')->get(['id', 'name', 'phone']);
+        /*
+        |--------------------------------------------------------------------------
+        | 1. Tandai Alpha
+        |--------------------------------------------------------------------------
+        */
+
+        if ($now >= $setting->jam_absen_selesai) {
+            $this->markAlpha($today);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2. Tandai Bolos
+        |--------------------------------------------------------------------------
+        */
+
+        if ($now >= $setting->jam_pulang_selesai) {
+            $this->markBolos($today);
+        }
+
+        $this->info('Proses absensi selesai.');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * ============================================================
+     * ALPHA
+     * ============================================================
+     */
+    private function markAlpha($today)
+    {
+        $siswaList = User::where('role', 'siswa')
+            ->get(['id', 'name', 'phone']);
+
         $siswaIds = $siswaList->pluck('id');
 
-        $sudahAbsenIds = Absensi::where('tanggal', $today)
+        $sudahAbsenIds = Absensi::whereDate('tanggal', $today)
             ->whereIn('user_id', $siswaIds)
             ->pluck('user_id');
 
         $belumAbsen = $siswaList->whereNotIn('id', $sudahAbsenIds);
 
         foreach ($belumAbsen as $siswa) {
+
             Absensi::create([
-                'user_id'   => $siswa->id,
-                'tanggal'   => $today,
-                'jam_masuk' => null,
-                'status'    => 'alpha',
+                'user_id'    => $siswa->id,
+                'tanggal'    => $today,
+                'jam_masuk'  => null,
+                'jam_keluar' => null,
+                'status'     => 'Alpha',
             ]);
 
             if (!empty($siswa->phone)) {
-                $tanggalIndo = now()->translatedFormat('d F Y');
 
-                $pesan = "Yth. Orang Tua/Wali dari *{$siswa->name}*,\n\n"
-                    . "Kami informasikan bahwa ananda *{$siswa->name}* tidak hadir (Alpha) di sekolah pada tanggal *{$tanggalIndo}* tanpa keterangan.\n\n"
-                    . "Mohon konfirmasi ke pihak sekolah jika diperlukan.\n\n"
-                    . "Pesan ini dikirim otomatis oleh Sistem Absensi Sekolah.";
+                $tanggal = now()->translatedFormat('d F Y');
+
+                $pesan =
+                    "Yth. Orang Tua/Wali dari *{$siswa->name}*,\n\n"
+                    ."Kami informasikan bahwa ananda *{$siswa->name}* "
+                    ."tidak hadir (Alpha) di sekolah pada tanggal *{$tanggal}*.\n\n"
+                    ."Mohon konfirmasi kepada pihak sekolah apabila terdapat kendala.\n\n"
+                    ."Pesan ini dikirim otomatis oleh Sistem Absensi Sekolah.";
 
                 WhatsappService::send($siswa->phone, $pesan);
 
-                // Jeda acak 4-8 detik sebelum lanjut ke siswa berikutnya
-                sleep(rand(4, 8));
+                sleep(rand(4,8));
             }
         }
 
-        if ($belumAbsen->count() > 0) {
-            $this->info("{$belumAbsen->count()} siswa ditandai Alpha dan notifikasi WA diproses.");
+        $this->info($belumAbsen->count().' siswa ditandai Alpha.');
+    }
+
+    /**
+     * ============================================================
+     * BOLOS
+     * ============================================================
+     */
+    private function markBolos($today)
+    {
+        $absensi = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->whereIn('status', [
+                'Hadir',
+                'Terlambat'
+            ])
+            ->whereNull('jam_keluar')
+            ->get();
+
+        foreach ($absensi as $item) {
+
+            $item->update([
+                'status' => 'Bolos'
+            ]);
+
+            $siswa = $item->user;
+
+            if ($siswa && !empty($siswa->phone)) {
+
+                $tanggal = now()->translatedFormat('d F Y');
+
+                $pesan =
+                    "Yth. Orang Tua/Wali dari *{$siswa->name}*,\n\n"
+                    ."Kami informasikan bahwa ananda *{$siswa->name}* "
+                    ."tercatat hadir di sekolah, namun belum melakukan *absen pulang* pada tanggal *{$tanggal}*.\n\n"
+                    ."Status absensi hari ini tercatat sebagai *Bolos* karena tidak melakukan absen pulang sesuai ketentuan sekolah.\n\n"
+                    ."Mohon memastikan ananda melakukan absen pulang atau menghubungi pihak sekolah apabila terdapat kendala.\n\n"
+                    ."Pesan ini dikirim otomatis oleh Sistem Absensi Sekolah.";
+
+                WhatsappService::send($siswa->phone, $pesan);
+
+                sleep(rand(4,8));
+            }
         }
+
+        $this->info($absensi->count().' siswa ditandai Bolos.');
     }
 }

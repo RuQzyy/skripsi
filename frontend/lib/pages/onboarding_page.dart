@@ -68,7 +68,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               children: [
 
                 Image.asset(
-                  "assets/logo/fix.png",
+                  "assets/logo/SMA15.png",
                   height: 80,
                 ),
 

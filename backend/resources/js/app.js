@@ -1,7 +1,9 @@
-import './bootstrap';
+import feather from 'feather-icons';
+import Swal from 'sweetalert2';
 
-import Alpine from 'alpinejs';
+window.feather = feather;
+window.Swal = Swal;
 
-window.Alpine = Alpine;
-
-Alpine.start();
+document.addEventListener('DOMContentLoaded', () => {
+    feather.replace();
+});

@@ -3,6 +3,15 @@ import '../services/auth_service.dart';
 import 'dashboard_page.dart';
 import 'forgot_password_page.dart';
 
+/// ===== PALET WARNA SIPRESMA 15 =====
+class AppColors {
+  static const Color lightest = Color(0xffF6FAFD);
+  static const Color light = Color(0xffB3CFE5);
+  static const Color medium = Color(0xff4A7FA7);
+  static const Color mediumDark = Color(0xff1A3D63);
+  static const Color darkest = Color(0xff0A1931);
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -54,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff2f2f2),
+      backgroundColor: AppColors.lightest,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
@@ -71,8 +80,8 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xff0f5132),
-                    Color(0xff198754),
+                    AppColors.darkest,
+                    AppColors.mediumDark,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -101,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   /// LOGO
                   Image.asset(
-                    "assets/logo/fix.png",
+                    "assets/logo/SMA15.png",
                     height: 90,
                   ),
 
@@ -109,11 +118,11 @@ class _LoginPageState extends State<LoginPage> {
 
                   /// TITLE
                   const Text(
-                    "SELAMAT DATANG DI ABSEN KITA, LOGIN\nUNTUK MELAKUKAN ABSENSI",
+                    "SELAMAT DATANG DI SIPRESMA 15 \nLOGIN UNTUK MELAKUKAN ABSENSI",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       height: 1.5,
                     ),
@@ -134,6 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                       "Nisn/Nip",
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
+                        color: AppColors.darkest,
                       ),
                     ),
 
@@ -141,12 +151,29 @@ class _LoginPageState extends State<LoginPage> {
 
                     TextField(
                       controller: nisnNipController,
+                      style: const TextStyle(color: AppColors.darkest),
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.light,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.light,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.mediumDark,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -158,6 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                       "Password",
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
+                        color: AppColors.darkest,
                       ),
                     ),
 
@@ -166,18 +194,36 @@ class _LoginPageState extends State<LoginPage> {
                    TextField(
                       controller: passwordController,
                       obscureText: obscurePassword,
+                      style: const TextStyle(color: AppColors.darkest),
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.light,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.light,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.mediumDark,
+                            width: 2,
+                          ),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility,
+                            color: AppColors.mediumDark,
                           ),
                           onPressed: () {
                             setState(() {
@@ -204,22 +250,22 @@ class _LoginPageState extends State<LoginPage> {
                         "Lupa Password?",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff1E5631),
+                          color: AppColors.darkest,
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
 
-                    /// LOGIN BUTTON
+                    /// LOGIN BUTTON (beda warna dari header biar hidup)
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xfff4dd2c),
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppColors.medium,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -227,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: isLoading
                             ? const CircularProgressIndicator(
-                                color: Colors.black,
+                                color: Colors.white,
                               )
                             : const Text(
                                 "LOGIN",

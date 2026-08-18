@@ -5,6 +5,9 @@ import 'dashboard_page.dart';
 import 'pengumuman_page.dart';
 import '../services/auth_service.dart';
 import 'register_face_page.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import '../utils/page_transition.dart';
+import 'login_page.dart'; // sumber AppColors
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -25,7 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     String role = user?["role"]?.toString() ?? "siswa";
 
-    return "http://192.168.1.12:8000/storage/$role/${user?["photo"]}";
+    return "http://192.168.1.48:8000/storage/$role/${user?["photo"]}";
   }
 
   final TextEditingController namaController = TextEditingController();
@@ -130,15 +133,48 @@ class _ProfilePageState extends State<ProfilePage> {
         readOnly: readOnly,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: icon != null ? Icon(icon) : null,
+          prefixIcon: icon != null ? Icon(icon, color: AppColors.medium) : null,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.lightest,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.mediumDark, width: 1.5),
+          ),
         ),
       ),
+    );
+  }
+
+    Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: Colors.white,
+          size: 22,
+        ),
+        if (!isActive) ...[
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -157,11 +193,13 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEDEDED),
+      backgroundColor: AppColors.lightest,
       body: SafeArea(
         child: user == null
             ? const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: AppColors.mediumDark,
+                ),
               )
             : SingleChildScrollView(
                 child: Column(
@@ -176,12 +214,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Color(0xff1E5631),
-                            Color(0xff2E7D32),
+                            AppColors.darkest,
+                            AppColors.mediumDark,
                           ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.only(
-                          bottomRight: Radius.circular(60),
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
                         ),
                       ),
                       child: const Center(
@@ -189,7 +230,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           "Profile Saya",
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -211,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
+                                    color: AppColors.darkest.withOpacity(0.08),
                                     blurRadius: 15,
                                     offset: const Offset(0, 6),
                                   )
@@ -223,8 +264,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     children: [
                                       CircleAvatar(
                                         radius: 50,
-                                        backgroundColor:
-                                            const Color(0xff1E5631),
+                                        backgroundColor: AppColors.mediumDark,
                                         backgroundImage: _selectedImage != null
                                             ? FileImage(_selectedImage!)
                                             : (user?["photo"] != null &&
@@ -265,7 +305,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                             decoration: BoxDecoration(
                                               color: _uploadingPhoto
                                                   ? Colors.grey
-                                                  : const Color(0xffF4D03F),
+                                                  : AppColors.darkest,
                                               shape: BoxShape.circle,
                                               border: Border.all(
                                                 color: Colors.white,
@@ -284,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 : const Icon(
                                                     Icons.camera_alt,
                                                     size: 16,
-                                                    color: Colors.black,
+                                                    color: Colors.white,
                                                   ),
                                           ),
                                         ),
@@ -298,14 +338,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
+                                      color: AppColors.darkest,
                                     ),
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
                                     (user?["nisn"] ?? user?["nip"] ?? "")
                                         .toString(),
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
+                                    style: const TextStyle(
+                                      color: Colors.black54,
                                     ),
                                   ),
                                   const SizedBox(height: 5),
@@ -314,8 +355,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ? (user?["kelas"]["nama_kelas"] ?? "")
                                             .toString()
                                         : "",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
+                                    style: const TextStyle(
+                                      color: Colors.black54,
                                     ),
                                   ),
                                 ],
@@ -330,6 +371,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.darkest.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,6 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
+                                      color: AppColors.darkest,
                                     ),
                                   ),
                                   const SizedBox(height: 20),
@@ -384,6 +433,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.darkest.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,6 +449,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
+                                      color: AppColors.darkest,
                                     ),
                                   ),
                                   const SizedBox(height: 20),
@@ -471,9 +528,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xffF4D03F),
-                                        foregroundColor: Colors.black,
+                                        backgroundColor: AppColors.mediumDark,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(16),
@@ -491,94 +548,102 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
 
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 25),
 
-                          Container(
-  padding: const EdgeInsets.all(20),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(24),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
+                            /// FACE ID
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.darkest.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Face ID",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.darkest,
+                                    ),
+                                  ),
 
-      const Text(
-        "Face ID",
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+                                  const SizedBox(height: 15),
 
-      const SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        user?["face_id"] == null
+                                            ? Icons.face_retouching_off
+                                            : Icons.verified,
+                                        color: user?["face_id"] == null
+                                            ? Colors.red
+                                            : AppColors.mediumDark,
+                                      ),
 
-      Row(
-        children: [
+                                      const SizedBox(width: 10),
 
-          Icon(
-            user?["face_id"] == null
-                ? Icons.face_retouching_off
-                : Icons.verified,
-            color: user?["face_id"] == null
-                ? Colors.red
-                : Colors.green,
-          ),
+                                      Expanded(
+                                        child: Text(
+                                          user?["face_id"] == null
+                                              ? "Face ID belum terdaftar"
+                                              : "Face ID sudah terdaftar",
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
 
-          const SizedBox(width: 10),
+                                  // ===============================
+                                  // Tombol hanya muncul jika belum daftar
+                                  // ===============================
 
-          Expanded(
-            child: Text(
-              user?["face_id"] == null
-                  ? "Face ID belum terdaftar"
-                  : "Face ID sudah terdaftar",
-              style: const TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ],
-      ),
+                                  if (user?["face_id"] == null) ...[
+                                    const SizedBox(height: 20),
 
-      // ===============================
-      // Tombol hanya muncul jika belum daftar
-      // ===============================
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const RegisterFacePage(),
+                                            ),
+                                          );
 
-      if (user?["face_id"] == null) ...[
-        const SizedBox(height: 20),
-
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton.icon(
-            onPressed: () async {
-
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const RegisterFacePage(),
-                ),
-              );
-
-              // Refresh data user setelah kembali
-              await getUser();
-            },
-            icon: const Icon(Icons.face),
-            label: const Text("Daftarkan Face ID"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff1E5631),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ),
-      ],
-
-    ],
-  ),
-)
+                                          // Refresh data user setelah kembali
+                                          await getUser();
+                                        },
+                                        icon: const Icon(Icons.face),
+                                        label: const Text("Daftarkan Face ID"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.darkest,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -588,57 +653,35 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
       ),
 
-      /// ================= BOTTOM NAV =================
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xff1E5631),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xffF4D03F),
-          unselectedItemColor: Colors.white70,
+            /// ================= BOTTOM NAV =================
+      bottomNavigationBar: CurvedNavigationBar(
+        index: 2, // PROFILE AKTIF
+        height: 60,
+        backgroundColor: AppColors.lightest,
+        color: AppColors.darkest,
+        buttonBackgroundColor: AppColors.mediumDark,
+        animationDuration: const Duration(milliseconds: 400),
+        animationCurve: Curves.easeInOut,
+        items: [
+          _navItem(icon: Icons.home, label: "Home", isActive: false),
+          _navItem(icon: Icons.campaign, label: "Pengumuman", isActive: false),
+          _navItem(icon: Icons.person, label: "Profile", isActive: true),
+        ],
+                onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              fadePageRoute(const DashboardPage()),
+            );
+          }
 
-          currentIndex: 2, // PROFILE aktif
-
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DashboardPage(),
-                ),
-              );
-            }
-
-            if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PengumumanPage(),
-                ),
-              );
-            }
-          },
-
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.campaign),
-              label: "Pengumuman",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profile",
-            ),
-          ],
-        ),
+          if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              fadePageRoute(const PengumumanPage()),
+            );
+          }
+        },
       ),
     );
   }

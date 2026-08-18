@@ -8,32 +8,14 @@
 
     <title>@yield('title', 'Admin Panel')</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#15803d',
-                        secondary: '#16a34a',
-                        soft: '#bbf7d0',
-                        light: '#dcfce7',
-                        bg: '#f0fdf4',
-                        dark: '#14532d',
-                    }
-                }
-            }
-        }
-    </script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
 
         .tooltip {
             position: absolute;
             left: 70px;
-            background: #14532d;
+            background: #0A1931;
             color: white;
             padding: 6px 10px;
             border-radius: 8px;
@@ -71,8 +53,17 @@
 <div class="flex h-screen">
 
     {{-- SIDEBAR --}}
+    {{--
+        flex-shrink-0 WAJIB ada di sini.
+        Tanpa ini, kalau konten di sisi kanan (mis. tabel lebar dengan
+        overflow-x-auto) butuh ruang lebih dari lebar layar, flexbox
+        akan ikut menyusutkan sidebar ini demi memuat konten kanan,
+        sehingga sidebar terlihat "hilang"/menyempit meski width-nya
+        di-set w-64. flex-shrink-0 mengunci lebar sidebar apa pun yang
+        terjadi di konten sebelah kanan.
+    --}}
     <aside id="sidebar"
-        class="w-64 bg-dark text-white flex flex-col transition-all duration-300 h-screen overflow-hidden">
+        class="w-64 flex-shrink-0 bg-dark text-white flex flex-col transition-all duration-300 h-screen overflow-hidden">
 
         {{-- HEADER --}}
         <div class="p-4 border-b border-white/10">
@@ -91,7 +82,7 @@
                     </h1>
 
                     <p class="text-xs text-light">
-                        MAN Ambon
+                        SMA 15 Ambon
                     </p>
 
                 </div>
@@ -281,7 +272,17 @@
     </aside>
 
     {{-- MAIN --}}
-    <div class="flex-1 flex flex-col">
+    {{--
+        min-w-0 WAJIB ada di sini juga (pasangan dari flex-shrink-0 di
+        atas). Tanpa min-w-0, flex item ini punya min-width default
+        "auto" yang mengikuti lebar konten terlebarnya (mis. tabel
+        dengan min-w-[1080px] di dalam @yield('content')). Itu memaksa
+        SELURUH baris flex melebar dan mendorong/menyusutkan sidebar.
+        Dengan min-w-0, elemen ini boleh menyusut sesuai layar, dan
+        overflow horizontal tabel di dalamnya akan discroll sendiri
+        oleh div overflow-x-auto miliknya (bukan mendorong sidebar).
+    --}}
+    <div class="flex-1 min-w-0 flex flex-col">
 
         {{-- NAVBAR --}}
         <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
@@ -293,7 +294,7 @@
                 </h2>
 
                 <p class="text-xs text-gray-500">
-                    Smart Attendance System MAN Ambon
+                    Smart Attendance System SMA 15 Ambon
                 </p>
 
             </div>
@@ -320,8 +321,18 @@
 
         </header>
 
-        {{-- CONTENT --}}
-        <main class="p-6 overflow-y-auto flex-1">
+        {{--
+            CONTENT
+            PERBAIKAN: overflow-x-hidden DIHAPUS dari sini.
+            Sebelumnya <main> punya overflow-y-auto + overflow-x-hidden,
+            yang menjadikan <main> ikut menjadi "scrolling container".
+            Ini berpotensi memotong/mengganggu elemen sticky (kolom
+            Foto & Aksi) di dalam tabel Data Siswa. Sekarang overflow
+            horizontal sepenuhnya diserahkan ke div pembungkus tabel
+            (overflow-x-auto) di dalam @yield('content'), sementara
+            main tetap min-w-0 supaya tidak mendorong sidebar melebar.
+        --}}
+        <main class="p-6 overflow-y-auto flex-1 min-w-0">
 
             @yield('content')
 

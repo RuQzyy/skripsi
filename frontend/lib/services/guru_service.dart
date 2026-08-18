@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 
 class GuruService {
-  static const String baseUrl = "http://192.168.1.12:8000/api";
+  static const String baseUrl = "http://192.168.1.48:8000/api";
 
   static Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();
@@ -33,13 +33,16 @@ class GuruService {
     return jsonDecode(response.body);
   }
 
-  static Future<Map<String, dynamic>> getRiwayatSiswa(int siswaId) async {
-    final response = await http.get(
-      Uri.parse("$baseUrl/guru/riwayat-siswa/$siswaId"),
-      headers: await _headers(),
-    );
-    return jsonDecode(response.body);
-  }
+  static Future<Map<String, dynamic>> getRiwayatSiswa(
+  int siswaId, {
+  int page = 1,
+    }) async {
+      final response = await http.get(
+        Uri.parse("$baseUrl/guru/riwayat-siswa/$siswaId?page=$page"),
+        headers: await _headers(),
+      );
+      return jsonDecode(response.body);
+    }
 
   static Future<Map<String, dynamic>> getKehadiranPerTanggal() async {
     final response = await http.get(

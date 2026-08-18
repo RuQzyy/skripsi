@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/guru_service.dart';
-import '../pages/login_page.dart';
+import '../pages/login_page.dart'; // sumber AppColors
 import 'guru_riwayat_siswa_page.dart';
 import 'guru_riwayat_kelas_page.dart';
 
@@ -41,7 +41,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
     if (siswa["photo"] == null || siswa["photo"].toString().isEmpty) {
       return "";
     }
-    return "http://192.168.1.12:8000/storage/siswa/${siswa["photo"]}";
+    return "http://192.168.1.48:8000/storage/siswa/${siswa["photo"]}";
   }
 
   Future<void> _loadData() async {
@@ -81,6 +81,10 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                 (route) => false,
               );
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.mediumDark,
+              foregroundColor: Colors.white,
+            ),
             child: const Text("Keluar"),
           ),
         ],
@@ -101,11 +105,11 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
     } catch (_) {}
 
     return Scaffold(
-      backgroundColor: const Color(0xffEDEDED),
+      backgroundColor: AppColors.lightest,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
-          color: const Color(0xff1E5631),
+          color: AppColors.mediumDark,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -115,7 +119,14 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
                   decoration: const BoxDecoration(
-                    color: Color(0xff1E5631),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.darkest,
+                        AppColors.mediumDark,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(30),
                       bottomRight: Radius.circular(30),
@@ -220,7 +231,8 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                 if (isLoading)
                   const Padding(
                     padding: EdgeInsets.only(top: 60),
-                    child: CircularProgressIndicator(color: Color(0xff1E5631)),
+                    child: CircularProgressIndicator(
+                        color: AppColors.mediumDark),
                   )
                 else if (kehadiranData == null)
                   const Padding(
@@ -238,7 +250,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                           _statCard(
                             "Hadir",
                             statistik?["hadir"] ?? 0,
-                            const Color(0xff1E5631),
+                            AppColors.mediumDark,
                             Icons.check_circle,
                           ),
                           const SizedBox(width: 10),
@@ -252,7 +264,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                           _statCard(
                             "Izin",
                             statistik?["izin"] ?? 0,
-                            Colors.blue.shade700,
+                            AppColors.medium,
                             Icons.info,
                           ),
                           const SizedBox(width: 10),
@@ -294,6 +306,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            color: AppColors.darkest,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -320,13 +333,13 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isActive
-                                        ? const Color(0xff1E5631)
+                                        ? AppColors.mediumDark
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: isActive
-                                          ? const Color(0xff1E5631)
-                                          : Colors.grey.shade300,
+                                          ? AppColors.mediumDark
+                                          : AppColors.light,
                                     ),
                                   ),
                                   child: Text(
@@ -336,7 +349,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                                       fontWeight: FontWeight.w600,
                                       color: isActive
                                           ? Colors.white
-                                          : Colors.black87,
+                                          : AppColors.darkest,
                                     ),
                                   ),
                                 ),
@@ -352,14 +365,14 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
 
                   // ===== LIST SISWA =====
                   filteredSiswa.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 40),
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 40),
                           child: Column(
                             children: [
                               Icon(Icons.search_off,
-                                  size: 48, color: Colors.grey.shade300),
-                              const SizedBox(height: 8),
-                              const Text(
+                                  size: 48, color: AppColors.light),
+                              SizedBox(height: 8),
+                              Text(
                                 "Tidak ada siswa",
                                 style: TextStyle(color: Colors.black45),
                               ),
@@ -397,7 +410,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.darkest.withOpacity(0.06),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -435,7 +448,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
     IconData statusIcon;
     switch (status.toLowerCase()) {
       case "hadir":
-        statusColor = const Color(0xff1E5631);
+        statusColor = AppColors.mediumDark;
         statusIcon = Icons.check_circle;
         break;
       case "terlambat":
@@ -443,7 +456,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
         statusIcon = Icons.access_time;
         break;
       case "izin":
-        statusColor = Colors.blue.shade700;
+        statusColor = AppColors.medium;
         statusIcon = Icons.info;
         break;
       case "sakit":
@@ -479,7 +492,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: AppColors.darkest.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -490,7 +503,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
             // Avatar
             CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xff1E5631).withOpacity(0.1),
+              backgroundColor: AppColors.mediumDark.withOpacity(0.1),
               backgroundImage: (siswa["photo"] != null &&
                       siswa["photo"].toString().isNotEmpty)
                   ? NetworkImage(getSiswaPhotoUrl(siswa))
@@ -503,7 +516,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                               .substring(0, 1)
                               .toUpperCase(),
                           style: const TextStyle(
-                            color: Color(0xff1E5631),
+                            color: AppColors.mediumDark,
                             fontWeight: FontWeight.bold,
                           ),
                         )
@@ -517,7 +530,10 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
                 children: [
                   Text(
                     siswa["name"] ?? "-",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkest,
+                    ),
                   ),
                   Text(
                     siswa["nisn"] ?? "-",
@@ -559,7 +575,7 @@ class _GuruDashboardPageState extends State<GuruDashboardPage> {
               ],
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.chevron_right, color: Colors.black26, size: 18),
+            const Icon(Icons.chevron_right, color: AppColors.light, size: 18),
           ],
         ),
       ),

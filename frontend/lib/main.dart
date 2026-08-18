@@ -6,6 +6,7 @@ import 'pages/dashboard_page.dart';
 import 'pages/login_success_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/guru_dashboard_page.dart';
+import 'services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,8 +14,42 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Mulai dengarkan konektivitas & jalankan sync yang tertunda dari sesi
+    // sebelumnya (kalau ada). Ini jalan sekali untuk seluruh app, tidak
+    // perlu dipanggil lagi di halaman lain.
+    SyncService.instance.init();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    SyncService.instance.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Setiap kali app dibuka lagi dari background, coba sinkronkan antrian
+    // -> ini jaring pengaman tambahan selain listener konektivitas,
+    // untuk kasus di mana koneksi sebenarnya sudah kembali saat app masih
+    // di background dan event-nya tidak sempat terpicu.
+    if (state == AppLifecycleState.resumed) {
+      SyncService.instance.syncNow();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +58,7 @@ class MyApp extends StatelessWidget {
 
       initialRoute: "/onboarding",
 
-    routes: {
+      routes: {
         "/onboarding":      (context) => const OnboardingPage(),
         "/login":           (context) => const LoginPage(),
         "/dashboard":       (context) => const DashboardPage(),

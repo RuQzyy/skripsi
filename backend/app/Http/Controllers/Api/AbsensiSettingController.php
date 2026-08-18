@@ -21,16 +21,27 @@ class AbsensiSettingController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'jam_absen_mulai' => $setting->jam_absen_mulai,
-                'jam_terlambat' => $setting->jam_terlambat,
+                // Jam Absen Masuk
+                'jam_absen_mulai'   => $setting->jam_absen_mulai,
+                'jam_terlambat'     => $setting->jam_terlambat,
                 'jam_absen_selesai' => $setting->jam_absen_selesai,
 
-                'nama_lokasi' => $setting->nama_lokasi,
-                'latitude' => $setting->latitude,
-                'longitude' => $setting->longitude,
-                'radius' => $setting->radius,
+                // Jam Absen Pulang
+                'jam_pulang_mulai'   => $setting->jam_pulang_mulai,
+                'jam_pulang_selesai' => $setting->jam_pulang_selesai,
 
-                'is_active' => $setting->is_active,
+                // Lokasi
+                'nama_lokasi' => $setting->nama_lokasi,
+                'latitude'    => (float) $setting->latitude,
+                'longitude'   => (float) $setting->longitude,
+                'radius'      => (float) $setting->radius,
+
+                // Status
+                'is_active' => (bool) $setting->is_active,
+
+                // WiFi
+                'wifi_required' => (bool) $setting->wifi_required,
+                'wifi_bssid'    => $setting->wifi_bssid,
             ]
         ]);
     }

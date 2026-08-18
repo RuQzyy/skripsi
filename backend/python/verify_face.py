@@ -3,7 +3,7 @@ import json
 import sys
 import numpy as np
 
-THRESHOLD = 0.85
+THRESHOLD = 0.70
 
 image_path = sys.argv[1]
 embedding_file = sys.argv[2]

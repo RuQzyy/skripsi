@@ -38,11 +38,16 @@
                 Pengaturan Waktu Absensi
             </h2>
 
+            {{-- ===== Jam Absen Masuk ===== --}}
+            <h3 class="font-semibold text-sm text-gray-600 mb-3">
+                Absen Masuk
+            </h3>
+
             <div class="grid md:grid-cols-3 gap-4">
 
                 <div>
                     <label class="block mb-2 text-sm font-medium">
-                        Jam Mulai
+                        Jam Absen Masuk Mulai
                     </label>
 
                     <input
@@ -66,13 +71,46 @@
 
                 <div>
                     <label class="block mb-2 text-sm font-medium">
-                        Jam Selesai
+                        Jam Absen Masuk Selesai
                     </label>
 
                     <input
                         type="time"
                         name="jam_absen_selesai"
                         value="{{ $setting->jam_absen_selesai }}"
+                        class="w-full border rounded-xl p-3">
+                </div>
+
+            </div>
+
+            {{-- ===== Jam Absen Pulang ===== --}}
+            <h3 class="font-semibold text-sm text-gray-600 mb-3 mt-6">
+                Absen Pulang
+            </h3>
+
+            <div class="grid md:grid-cols-2 gap-4">
+
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        Jam Absen Pulang Mulai
+                    </label>
+
+                    <input
+                        type="time"
+                        name="jam_pulang_mulai"
+                        value="{{ $setting->jam_pulang_mulai }}"
+                        class="w-full border rounded-xl p-3">
+                </div>
+
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        Jam Absen Pulang Selesai
+                    </label>
+
+                    <input
+                        type="time"
+                        name="jam_pulang_selesai"
+                        value="{{ $setting->jam_pulang_selesai }}"
                         class="w-full border rounded-xl p-3">
                 </div>
 
@@ -134,6 +172,33 @@
 
                 <div>
                     <label class="block mb-2 text-sm font-medium">
+                        BSSID WiFi Sekolah
+                    </label>
+
+                    <input
+                        type="text"
+                        name="wifi_bssid"
+                        value="{{ $setting->wifi_bssid }}"
+                        placeholder="Contoh: aa:bb:cc:dd:ee:ff"
+                        class="w-full border rounded-xl p-3">
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Alamat unik router WiFi sekolah. Cara mendapatkannya: hubungkan HP ke WiFi sekolah,
+                        lalu gunakan comand prompt netsh wlan show interfaces untuk mengecek BSSID dari router wifi.
+                    </p>
+                </div>
+
+                <input type="hidden" name="wifi_required" value="0">
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="wifi_required" name="wifi_required" value="1"
+                        {{ $setting->wifi_required ? 'checked' : '' }} class="w-5 h-5">
+                    <label for="wifi_required" class="text-sm font-medium">
+                        Wajibkan siswa terhubung ke WiFi sekolah untuk bisa absen
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
                         Radius Absensi (Meter)
                     </label>
 
@@ -145,6 +210,8 @@
                         placeholder="Radius"
                         class="w-full border rounded-xl p-3">
                 </div>
+
+
 
                 {{-- BUTTON GPS --}}
                 <div>
